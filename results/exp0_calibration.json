@@ -1,0 +1,518 @@
+{
+  "description": "Experiment 0 \u2014 fair calibration of the ripple engine.\n\nHNSW is run at a sensible tuned operating point (ef=64), so the ripple engine\ndeserves the same: a grid search over its physics parameters on a validation\ncorpus (N=20k, D=64, separate query seed from all other experiments). We\nreport the full recall/work Pareto frontier and pick the configuration that\nmaximizes recall@10 subject to visiting <= 5% of the corpus per query. All\nother experiments use the winning configuration.\n",
+  "grid": {
+    "n_neighbors": [
+      16,
+      32
+    ],
+    "decay": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "gamma": [
+      1.0,
+      2.0
+    ],
+    "theta": [
+      0.0001,
+      1e-05
+    ],
+    "n_entry": [
+      8,
+      16
+    ]
+  },
+  "rows": [
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.3,
+      "mean_visited": 1195.55,
+      "visited_frac": 0.0597775
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.29250000000000004,
+      "mean_visited": 1183.1,
+      "visited_frac": 0.05915499999999999
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.75,
+      "mean_visited": 5207.35,
+      "visited_frac": 0.26036750000000003
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.7425,
+      "mean_visited": 5054.1625,
+      "visited_frac": 0.252708125
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.06375,
+      "mean_visited": 157.5625,
+      "visited_frac": 0.007878125
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.09,
+      "mean_visited": 185.725,
+      "visited_frac": 0.00928625
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.16625,
+      "mean_visited": 535.3125,
+      "visited_frac": 0.026765625
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.18125,
+      "mean_visited": 606.5375,
+      "visited_frac": 0.030326875
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.38,
+      "mean_visited": 1565.3,
+      "visited_frac": 0.078265
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.33124999999999993,
+      "mean_visited": 1418.05,
+      "visited_frac": 0.0709025
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.8,
+      "mean_visited": 6379.0,
+      "visited_frac": 0.31895
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.7950000000000002,
+      "mean_visited": 6042.5125,
+      "visited_frac": 0.302125625
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.07750000000000001,
+      "mean_visited": 183.875,
+      "visited_frac": 0.00919375
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.08875,
+      "mean_visited": 198.3,
+      "visited_frac": 0.009915
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.175,
+      "mean_visited": 592.4,
+      "visited_frac": 0.02962
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.20750000000000002,
+      "mean_visited": 685.325,
+      "visited_frac": 0.034266250000000005
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.4299999999999999,
+      "mean_visited": 1764.575,
+      "visited_frac": 0.08822875000000001
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.35125,
+      "mean_visited": 1586.7375,
+      "visited_frac": 0.079336875
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.8600000000000001,
+      "mean_visited": 7215.45,
+      "visited_frac": 0.3607725
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.8400000000000001,
+      "mean_visited": 6759.7,
+      "visited_frac": 0.337985
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.07,
+      "mean_visited": 193.175,
+      "visited_frac": 0.00965875
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.1,
+      "mean_visited": 218.4,
+      "visited_frac": 0.010920000000000001
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.185,
+      "mean_visited": 633.25,
+      "visited_frac": 0.0316625
+    },
+    {
+      "n_neighbors": 16,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.21500000000000002,
+      "mean_visited": 730.7875,
+      "visited_frac": 0.036539375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.615,
+      "mean_visited": 3788.4625,
+      "visited_frac": 0.189423125
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.5825000000000001,
+      "mean_visited": 3443.15,
+      "visited_frac": 0.1721575
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.9862500000000001,
+      "mean_visited": 13949.0,
+      "visited_frac": 0.69745
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.9800000000000001,
+      "mean_visited": 13087.8,
+      "visited_frac": 0.6543899999999999
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.1475,
+      "mean_visited": 356.1375,
+      "visited_frac": 0.017806875
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.15375,
+      "mean_visited": 369.6375,
+      "visited_frac": 0.018481875
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.39375000000000004,
+      "mean_visited": 1653.75,
+      "visited_frac": 0.0826875
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.8,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.425,
+      "mean_visited": 1701.5125,
+      "visited_frac": 0.085075625
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.725,
+      "mean_visited": 4988.4125,
+      "visited_frac": 0.249420625
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.63125,
+      "mean_visited": 4122.875,
+      "visited_frac": 0.20614375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.9912500000000002,
+      "mean_visited": 15402.825,
+      "visited_frac": 0.77014125
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.9887500000000001,
+      "mean_visited": 14556.1875,
+      "visited_frac": 0.727809375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.185,
+      "mean_visited": 434.9125,
+      "visited_frac": 0.021745625
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.16124999999999998,
+      "mean_visited": 412.075,
+      "visited_frac": 0.02060375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.4175,
+      "mean_visited": 1866.4625,
+      "visited_frac": 0.093323125
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.9,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.45999999999999996,
+      "mean_visited": 1961.3,
+      "visited_frac": 0.098065
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.7787499999999999,
+      "mean_visited": 5666.2625,
+      "visited_frac": 0.283313125
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.67375,
+      "mean_visited": 4582.6125,
+      "visited_frac": 0.229130625
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.9949999999999999,
+      "mean_visited": 16301.8875,
+      "visited_frac": 0.815094375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 1.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.9962499999999999,
+      "mean_visited": 15521.6875,
+      "visited_frac": 0.776084375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 8,
+      "recall@10": 0.1875,
+      "mean_visited": 468.5875,
+      "visited_frac": 0.023429375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 0.0001,
+      "n_entry": 16,
+      "recall@10": 0.18125,
+      "mean_visited": 462.0875,
+      "visited_frac": 0.023104375
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 8,
+      "recall@10": 0.43624999999999997,
+      "mean_visited": 2002.125,
+      "visited_frac": 0.10010625
+    },
+    {
+      "n_neighbors": 32,
+      "decay": 0.95,
+      "gamma": 2.0,
+      "theta": 1e-05,
+      "n_entry": 16,
+      "recall@10": 0.47125000000000006,
+      "mean_visited": 2104.375,
+      "visited_frac": 0.10521875
+    }
+  ],
+  "best": {
+    "n_neighbors": 16,
+    "decay": 0.95,
+    "gamma": 2.0,
+    "theta": 1e-05,
+    "n_entry": 16,
+    "recall@10": 0.21500000000000002,
+    "mean_visited": 730.7875,
+    "visited_frac": 0.036539375
+  }
+}

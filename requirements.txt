@@ -1,0 +1,8 @@
+numpy>=2.0
+scipy>=1.14
+scikit-learn>=1.5
+hnswlib>=0.8
+nltk>=3.9
+matplotlib>=3.9
+psycopg2-binary>=2.9  # optional: PostgreSQL FTS baseline
+threadpoolctl>=3.0
