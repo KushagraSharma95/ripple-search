@@ -80,8 +80,11 @@ TOKEN = re.compile(r"[A-Za-z0-9]+")
 
 
 def to_contains(text: str) -> str:
+    # ACCUM (,) sums weighted term scores — the BM25-analog ranking. Oracle
+    # Text's | (OR) would rank by the MAX single-term score, which buries
+    # multi-term matches and would unfairly understate Oracle's quality.
     toks = TOKEN.findall(text)
-    return " | ".join("{%s}" % t for t in toks) if toks else "{x}"
+    return " , ".join("{%s}" % t for t in toks) if toks else "{x}"
 
 
 def oracle_query(text: str, k: int = K + 1) -> list[int]:
@@ -108,6 +111,13 @@ def category_p_at_10(results: list[list[int]]) -> float:
 
 
 res, lat = time_queries(oracle_query, q_texts)
+
+# Second condition: typical short keyword queries (lead 10 words). 40-term OR
+# queries are pathological for postings-list engines; this shows the engine at
+# its intended query shape.
+q_short = [lead_words(texts[i], 10) for i in q_ids]
+res_s, lat_s = time_queries(oracle_query, q_short)
+
 out = {
     "description": __doc__,
     "engine": "oracle_text_context",
@@ -119,6 +129,8 @@ out = {
     **summarize(lat),
     "category_p@10": category_p_at_10(res),
     "empty_result_queries": sum(1 for r in res if not r),
+    "short_query_10w": {**summarize(lat_s),
+                        "category_p@10": category_p_at_10(res_s)},
 }
 cur.execute("SELECT banner_full FROM v$version")
 out["oracle_version"] = cur.fetchone()[0]

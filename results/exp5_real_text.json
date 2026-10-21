@@ -1,0 +1,54 @@
+{
+  "description": "Experiment 5 \u2014 real text, real database engines. The user's question:\n\"is it faster than search in Teradata or Oracle databases?\"\n\nTeradata and Oracle cannot be installed here (proprietary, licensed); their\ntext search layers are inverted-index engines (Oracle Text CONTEXT = inverted\nindex + relevance ranking), so we benchmark against the same architecture in\nopen form, PLUS the modern ANN state of the art:\n\n    FTS5 BM25       SQLite's C inverted index (in-memory) \u2014 proxy for\n                    Oracle Text-style architecture\n    PostgreSQL FTS  tsvector + GIN index + ts_rank \u2014 a real enterprise RDBMS\n    brute force     exact cosine over LSA embeddings (ground truth)\n    HNSW            graph ANN state of the art\n    Ripple          the hypothesis\n\nCorpus: Reuters-21578 (10,788 docs, 90 topic labels). Queries: 300 held-out\ndocuments' lead text. Quality metrics: same-category precision@10 (label\nagreement, excluding the query document itself) for ALL engines, plus\nrecall@10 vs exact cosine for the embedding engines. Latency: single-threaded,\np50/p95, index build reported separately.\n",
+  "n_docs": 10788,
+  "n_queries": 300,
+  "svd_dim": 256,
+  "embed_pipeline_build_s": 3.8276702379998824,
+  "query_embed_ms": 0.045690696667103715,
+  "engines": {
+    "brute_force": {
+      "build_s": 0.004232193999996525,
+      "mean_ms": 0.6322251800005081,
+      "p50_ms": 0.5774934998044046,
+      "p95_ms": 0.9101143494262948,
+      "qps_single_thread": 1581.7149199897358,
+      "recall@10_vs_exact": 1.0,
+      "category_p@10": 0.8786666666666667
+    },
+    "ripple": {
+      "build_s": 2.848477128000013,
+      "mean_ms": 49.639085940007135,
+      "p50_ms": 48.92459399979998,
+      "p95_ms": 94.13076084952083,
+      "qps_single_thread": 20.145415272323532,
+      "recall@10_vs_exact": 0.9656666666666667,
+      "category_p@10": 0.8616666666666667,
+      "mean_visited": 3706.35
+    },
+    "hnsw": {
+      "build_s": 2.2172624599998016,
+      "mean_ms": 0.09170686003926676,
+      "p50_ms": 0.08201550008379854,
+      "p95_ms": 0.16232150005635052,
+      "qps_single_thread": 10904.309662023355,
+      "recall@10_vs_exact": 0.9976666666666667,
+      "category_p@10": 0.8790000000000001
+    },
+    "sqlite_fts5_bm25": {
+      "build_s": 0.24658940999961487,
+      "mean_ms": 38.17359614336662,
+      "p50_ms": 40.06557550019352,
+      "p95_ms": 59.81761175030442,
+      "qps_single_thread": 26.19611723884622,
+      "category_p@10": 0.8473333333333333
+    },
+    "postgres_fts_gin": {
+      "build_s": 1.993702951999694,
+      "mean_ms": 56.044828786659004,
+      "p50_ms": 55.0346704999356,
+      "p95_ms": 78.23393044986915,
+      "qps_single_thread": 17.84285939754787,
+      "category_p@10": 0.7776666666666667
+    }
+  }
+}

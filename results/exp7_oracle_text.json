@@ -1,0 +1,22 @@
+{
+  "description": "Experiment 7 \u2014 the real Oracle Text engine, directly.\n\nOracle Database Free (gvenzl/oracle-free container image) ships under the\nFree Use Terms and Conditions (FUTC, embedded in the image at\n$ORACLE_HOME/LICENSE, last updated 8 Oct 2018). Unlike Oracle's OTN developer\nlicense, the FUTC contains NO benchmark-disclosure (\"DeWitt\") clause \u2014 the\nfull text was read before publishing these numbers; a copy of the relevant\ngrant is quoted in docs/METHODOLOGY.md.\n\nSame corpus, queries and metrics as exp5 (Reuters-21578, 300 lead-text\nqueries, category precision@10, single-threaded client): a CONTEXT inverted\nindex with CONTAINS + SCORE ranking. Latency includes a localhost-bridge TCP\nround trip (documented; FTS5 is in-process, PostgreSQL uses a unix socket).\n\nEnv: ORACLE_DSN (host:port/service), ORACLE_USER, ORACLE_PASSWORD.\n",
+  "engine": "oracle_text_context",
+  "oracle_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+  "n_docs": 10788,
+  "n_queries": 300,
+  "load_s": 1.1183647100006056,
+  "index_build_s": 2.689304419000109,
+  "mean_ms": 11.726064589990225,
+  "p50_ms": 11.530771001162066,
+  "p95_ms": 16.15413934960089,
+  "qps_single_thread": 85.28010333949847,
+  "category_p@10": 0.807,
+  "empty_result_queries": 0,
+  "short_query_10w": {
+    "mean_ms": 7.705868766661297,
+    "p50_ms": 7.705358500061266,
+    "p95_ms": 12.960880049649859,
+    "qps_single_thread": 129.77122116670404,
+    "category_p@10": 0.762
+  }
+}

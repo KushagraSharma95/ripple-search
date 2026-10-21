@@ -1,0 +1,31 @@
+{
+  "description": "Experiment 6 \u2014 CLAIM: \"as data ages the system merges old nodes into dense\nhistorical macro-nodes; time effectively self-indexes the database, keeping\nthe active search field perpetually small and lightning-fast\" \u2014 at what cost\nto recall on archival queries?\n\nTest: N=50k docs with timestamps over 1000 days (90% archive, 10% recent).\nQueries: a recent-leaning stream (80% target recent docs) plus a pure archival\nstream. Measure visited count, latency, and recall@10 vs exact truth before\nand after consolidation, separately for recent-targeting and archive-targeting\nqueries.\n",
+  "n": 50000,
+  "macro_nodes_created": 4070,
+  "active_original_nodes_after": 5063,
+  "compression_ratio": 5.474652359575167,
+  "before": {
+    "recent_queries": {
+      "recall@10": 0.903,
+      "mean_visited": 17823.495,
+      "p50_ms": 98.21288249986537
+    },
+    "old_queries": {
+      "recall@10": 0.9180000000000001,
+      "mean_visited": 18608.29,
+      "p50_ms": 108.63632300015524
+    }
+  },
+  "after": {
+    "recent_queries": {
+      "recall@10": 0.8025,
+      "mean_visited": 2620.945,
+      "p50_ms": 69.29937450013313
+    },
+    "old_queries": {
+      "recall@10": 0.8530000000000001,
+      "mean_visited": 2621.305,
+      "p50_ms": 73.79387399987536
+    }
+  }
+}

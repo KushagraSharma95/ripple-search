@@ -51,20 +51,26 @@ for workload in ["zipf", "drifting", "uniform"]:
             # Energy the ripple deposited across the activated zone.
             neighborhoods.append(dict(rip.last_stats.activated_energy))
 
+    def top_energy(nb: dict, m: int = 100) -> dict:
+        """Charitable bounded prefetch: only the m hottest neighborhood items."""
+        return dict(sorted(nb.items(), key=lambda kv: -kv[1])[:m])
+
     rows = []
     for cap in CAPACITIES:
         tau = N_STREAM / 20  # logical-time cooling constant
         policies = {
             "lru": LRUCache(cap, prefetch=False),
             "lfu": LFUCache(cap),
-            "lru_prefetch": LRUCache(cap, prefetch=True),
+            "lru_prefetch_all": LRUCache(cap, prefetch=True),
+            "lru_prefetch_top100": LRUCache(cap, prefetch=True),
             "thermo_exact": ThermoCache(cap, tau=tau, prefetch=False),
             "thermo_prefetch": ThermoCache(cap, tau=tau, prefetch=True),
         }
         for name, cache in policies.items():
             for t, (need, nb) in enumerate(zip(needed, neighborhoods)):
                 cache.probe(need, float(t))
-                cache.admit(need, nb, float(t))
+                nb_pol = top_energy(nb) if name == "lru_prefetch_top100" else nb
+                cache.admit(need, nb_pol, float(t))
         rows.append({"capacity": cap,
                      **{name: c.hit_rate for name, c in policies.items()}})
         print(f"{workload} cap={cap}: " +

@@ -1,0 +1,22 @@
+{
+  "description": "Experiment 5b \u2014 text engines at their intended query shape.\n\nexp5's 40-term OR queries are pathological for postings-list engines (every\nterm's postings list must be scanned and merged). This measures SQLite FTS5\nand PostgreSQL FTS on the same 300 queries truncated to their lead 10 words \u2014\nthe shape real keyword search takes \u2014 so the latency comparison does not\nquietly slander the inverted-index engines.\n",
+  "n_queries": 300,
+  "engines": {
+    "sqlite_fts5_bm25": {
+      "build_s": 0.33608351799921365,
+      "mean_ms": 7.939024406647756,
+      "p50_ms": 7.6015559998268145,
+      "p95_ms": 12.99879955040524,
+      "qps_single_thread": 125.9600611836699,
+      "category_p@10": 0.7670000000000001
+    },
+    "postgres_fts_gin": {
+      "build_s": 1.7738537040004303,
+      "mean_ms": 21.640969106635264,
+      "p50_ms": 22.12196599884919,
+      "p95_ms": 30.6559106502391,
+      "qps_single_thread": 46.2086515198339,
+      "category_p@10": 0.7566666666666667
+    }
+  }
+}

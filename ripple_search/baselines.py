@@ -77,7 +77,9 @@ class FTS5BM25:
 
     @staticmethod
     def _sanitize(query: str) -> str:
-        terms = ["\"%s\"" % t.replace('"', "") for t in query.split() if t.strip('"')]
+        import re
+
+        terms = ['"%s"' % t for t in re.findall(r"[A-Za-z0-9]+", query)]
         return " OR ".join(terms) if terms else '""'
 
     def query(self, text: str, k: int = 10) -> list[int]:
@@ -112,7 +114,9 @@ class PostgresFTS:
         self.cur = cur
 
     def query(self, text: str, k: int = 10) -> list[int]:
-        terms = [t for t in text.replace("'", " ").split() if t]
+        import re
+
+        terms = re.findall(r"[A-Za-z0-9]+", text)
         q = " | ".join(terms) if terms else "x"
         self.cur.execute(
             "SELECT id FROM docs, to_tsquery('english', %s) tq "
