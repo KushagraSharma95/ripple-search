@@ -86,16 +86,19 @@ out = {"description": __doc__, "seed": SEED, "capacities": CAPACITIES}
 
 if TUNE:
     grid = []
-    for w in [0.05, 0.1, 0.2, 0.3, 0.5]:
-        for m in [50, 100]:
-            for frac in [0.25, 0.5]:
-                r = run_policy(lambda cap, w=w, m=m, f=frac: HybridCache(
-                    cap, prefetch_m=m, prefetch_frac=f, window_frac=w))
-                score = sum(r.values())
-                grid.append({"window_frac": w, "prefetch_m": m,
-                             "prefetch_frac": frac, **r, "sum": score})
-                print(f"w={w} m={m} frac={frac}: zipf={r['zipf']:.4f} "
-                      f"drift={r['drifting']:.4f} unif={r['uniform']:.4f} sum={score:.4f}")
+    for adaptive in [True, False]:
+        for w in [0.05, 0.1, 0.2]:
+            for m in [50, 100]:
+                for frac in [0.5, 0.75]:
+                    r = run_policy(lambda cap, a=adaptive, w=w, m=m, f=frac: HybridCache(
+                        cap, prefetch_m=m, prefetch_frac=f, window_frac=w, adaptive=a))
+                    score = sum(r.values())
+                    grid.append({"adaptive": adaptive, "window_frac": w,
+                                 "prefetch_m": m, "prefetch_frac": frac,
+                                 **r, "sum": score})
+                    print(f"a={int(adaptive)} w={w} m={m} frac={frac}: "
+                          f"zipf={r['zipf']:.4f} drift={r['drifting']:.4f} "
+                          f"unif={r['uniform']:.4f} sum={score:.4f}")
     best = max(grid, key=lambda g: g["sum"])
     print("BEST:", best)
     out["tuning_grid"] = grid

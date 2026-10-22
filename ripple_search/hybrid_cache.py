@@ -33,13 +33,20 @@ from .thermo_cache import BaseCache
 class HybridCache(BaseCache):
     def __init__(self, capacity: int, prefetch_m: int = 100,
                  prefetch_frac: float = 0.5, window_frac: float = 0.1,
-                 age_every: int = 2000):
+                 age_every: int = 2000, adaptive: bool = False,
+                 adapt_epoch: int = 250, adapt_step: float = 0.06):
         super().__init__(capacity)
-        self.window_size = max(1, int(window_frac * capacity))
-        self.main_cap = max(1, capacity - self.window_size)
+        self.prefetch_frac = prefetch_frac
+        self._resize(window_frac)
         self.prefetch_m = prefetch_m
-        self.prefetch_budget = max(1, int(prefetch_frac * self.main_cap))
         self.age_every = age_every
+        self.adaptive = adaptive
+        self.adapt_epoch = adapt_epoch
+        self.adapt_step = adapt_step
+        self._dir = 1.0
+        self._prev_rate = None
+        self._last_hits = 0
+        self._last_probes = 0
         self.freq: dict = defaultdict(int)   # ghost frequencies (all keys)
         self.window: OrderedDict = OrderedDict()
         self.main: set = set()
@@ -47,6 +54,48 @@ class HybridCache(BaseCache):
         self._mheap: list = []               # lazy (freq, seq, key) over main
         self._seq = 0
         self._ops = 0
+
+    # -------------------------------------------------------- adaptive sizing
+    def _resize(self, window_frac: float) -> None:
+        self.window_frac = window_frac
+        self.window_size = max(1, int(window_frac * self.capacity))
+        self.main_cap = max(1, self.capacity - self.window_size)
+        self.prefetch_budget = max(1, int(self.prefetch_frac * self.main_cap))
+
+    def _enforce_sizes(self) -> None:
+        # Window shrank: demote LRU evictees through the frequency gate.
+        while len(self.window) > self.window_size:
+            evictee, _ = self.window.popitem(last=False)
+            self._admit_to_main(evictee)
+        # Main shrank: drop stale prefetches first, then coldest residents.
+        while len(self.main) > self.main_cap:
+            if self.prefetched:
+                victim, _ = self.prefetched.popitem(last=False)
+            else:
+                v = self._peek(self._mheap, self.main)
+                if v is None:
+                    break
+                victim = v[1]
+            self.main.discard(victim)
+            self.prefetched.pop(victim, None)
+        while len(self.prefetched) > self.prefetch_budget:
+            victim, _ = self.prefetched.popitem(last=False)
+            self.main.discard(victim)
+
+    def _adapt(self) -> None:
+        # Hill-climb window_frac on epoch hit rate (Caffeine-style): keep
+        # moving while the rate improves, reverse when it drops.
+        probes = (self.hits + self.misses) - self._last_probes
+        rate = (self.hits - self._last_hits) / max(1, probes)
+        self._last_hits = self.hits
+        self._last_probes = self.hits + self.misses
+        if self._prev_rate is not None and rate < self._prev_rate:
+            self._dir = -self._dir
+        self._prev_rate = rate
+        new = min(0.8, max(0.02, self.window_frac + self._dir * self.adapt_step))
+        if new != self.window_frac:
+            self._resize(new)
+            self._enforce_sizes()
 
     # ----------------------------------------------------------- heap helpers
     def _push(self, k) -> None:
@@ -123,6 +172,8 @@ class HybridCache(BaseCache):
                 self.prefetched[k] = True    # newest prefetch = last in LRU order
                 self._push(k)
         self._ops += 1
+        if self.adaptive and self._ops % self.adapt_epoch == 0:
+            self._adapt()
         if self._ops % self.age_every == 0:
             for k in list(self.freq):
                 self.freq[k] //= 2
