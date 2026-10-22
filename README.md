@@ -201,6 +201,43 @@ warmed up, p50/p95 over 100–300 queries; build times reported separately
 seeds, with exp3/exp4 additionally run over 3 seeds (mean ± sd). Full
 limitations: `docs/METHODOLOGY.md`.
 
+## Part 2 — from autopsy to wins (exp8, exp8b, exp9)
+
+After the verdicts, the obvious question: what WOULD win? `docs/FRONTIER.md`
+maps the 2024–2026 record (competition leaderboards, primary papers) into
+closed fronts, measured hype, and three open fronts. Two of those were then
+attacked here, with pre-registered win conditions and the negatives kept:
+
+**Adaptive early termination (exp8/exp8b)** — shipped libraries spend one
+fixed search budget (`ef`) on every query; a per-query stall-based stop on
+the same graph saves work where query difficulty varies:
+
+![early exit](results/plots/exp8_early_exit.png)
+
+On Reuters, early-exit saves 5–24% of distance computations at matched
+recall across the mid range, rising to **17% at recall 0.977 and 22–37% at
+0.988**. Two published negatives: a naive unbounded-patience rule loses to
+the classic bound everywhere, and on a homogeneous synthetic corpus the
+method ties or loses — adaptive termination profits from query-difficulty
+VARIANCE, which real corpora have and uniform synthetic benchmarks hide.
+The learned versions of this idea (DARTH, SIGMOD'26; LAET; Ada-ef) reach
+multiples, which is why FRONTIER.md ranks this the most tractable serious
+target.
+
+**One cache policy for all workloads (exp9)** — pre-registered protocol:
+tune on seed 0, validate frozen on seeds 1–2; win = match-or-beat the best
+specialist on every workload. Result: **condition NOT met, and the
+near-misses are the finding.** The hybrid (LRU window → ghost-frequency
+gate → recency-ordered bounded semantic prefetch) loses zipf to ghost-LFU
+by ~0.001 in every seed and drift to the LRU family, but it is the best
+single policy on aggregate (+5.5% over the next best) and the only one
+that never collapses: every specialist craters somewhere (ghost-LFU 0.064
+on drift, prefetch-LRU 0.059 on zipf; the hybrid's worst column rank is
+3rd). Also kept: a Caffeine-style hill-climbing window adaptation that
+HURT at short epochs, and the measured reason the drift specialists stay
+ahead (window demotions consume the prefetch pool — structural, not a
+tuning artifact). No free lunch, now with numbers.
+
 ## Repo layout
 
 ```

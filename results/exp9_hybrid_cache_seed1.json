@@ -1,0 +1,46 @@
+{
+  "description": "Experiment 9 \u2014 the second win attempt: one cache policy for all workloads.\n\nexp4 found specialists: ghost-frequency LFU wins zipf, bounded-prefetch LRU\nwins drifting, uniform ties. HybridCache combines frequency-gated admission\nwith budget-bounded semantic prefetch.\n\nProtocol (pre-registered here):\n  1. Tune (prefetch_m, prefetch_frac) on SEED 0 only.\n  2. Freeze the winner; evaluate on seeds 1 and 2, never re-tuned.\n  3. Win condition: on every workload, hybrid's mean-across-capacities hit\n     rate >= the best exp4 arm for that workload (within 1 sd), on the\n     held-out seeds.\n\nRun with SEED=0 TUNE=1 for the tuning pass; SEED=n for evaluation passes.\n",
+  "seed": 1,
+  "capacities": [
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "hybrid_params": {
+    "prefetch_m": 50,
+    "prefetch_frac": 1.0
+  },
+  "policies": {
+    "hybrid": {
+      "zipf": 0.15141875,
+      "drifting": 0.07772499999999999,
+      "uniform": 0.05075
+    },
+    "lru": {
+      "zipf": 0.09185625,
+      "drifting": 0.0778875,
+      "uniform": 0.047912500000000004
+    },
+    "lfu_plain": {
+      "zipf": 0.12930625,
+      "drifting": 0.06921250000000001,
+      "uniform": 0.050493750000000004
+    },
+    "lfu_ghost_admission": {
+      "zipf": 0.15279375,
+      "drifting": 0.06344375,
+      "uniform": 0.050237500000000004
+    },
+    "lru_prefetch_top100": {
+      "zipf": 0.0599625,
+      "drifting": 0.08929999999999999,
+      "uniform": 0.050187499999999996
+    },
+    "thermo_prefetch": {
+      "zipf": 0.11576875,
+      "drifting": 0.08018125,
+      "uniform": 0.04903125
+    }
+  }
+}
