@@ -13,8 +13,10 @@ search engine's activation energies:
   - window (window_frac of capacity): plain LRU, unconditional admission
   - main: ghost-frequency-gated, lazy min-heap eviction, O(log n)
   - prefetch pool (inside main, <= prefetch_frac of capacity): top
-    `prefetch_m` neighbors by energy; prefetches only displace other
-    unproven prefetches and graduate to main on first hit
+    `prefetch_m` neighbors by energy; the pool evicts by RECENCY (fresh
+    prefetches displace stale ones — under drift the newest neighbors are
+    the likely future needs), never displaces proven residents, and a
+    prefetch graduates to main on first hit
 
 Tuning protocol: knobs chosen on seed 0 only; validated untouched on
 seeds 1-2 (exp9).
@@ -41,19 +43,15 @@ class HybridCache(BaseCache):
         self.freq: dict = defaultdict(int)   # ghost frequencies (all keys)
         self.window: OrderedDict = OrderedDict()
         self.main: set = set()
-        self.prefetched: set = set()         # unproven prefetches (subset of main)
+        self.prefetched: OrderedDict = OrderedDict()  # unproven prefetches, LRU order
         self._mheap: list = []               # lazy (freq, seq, key) over main
-        self._pheap: list = []               # lazy heap over prefetched
         self._seq = 0
         self._ops = 0
 
     # ----------------------------------------------------------- heap helpers
     def _push(self, k) -> None:
         self._seq += 1
-        entry = (self.freq[k], self._seq, k)
-        heapq.heappush(self._mheap, entry)
-        if k in self.prefetched:
-            heapq.heappush(self._pheap, entry)
+        heapq.heappush(self._mheap, (self.freq[k], self._seq, k))
 
     def _peek(self, heap, pool):
         while heap:
@@ -72,7 +70,7 @@ class HybridCache(BaseCache):
             return True
         if key in self.main:
             self.freq[key] += 1
-            self.prefetched.discard(key)     # a hit graduates a prefetch
+            self.prefetched.pop(key, None)   # a hit graduates a prefetch
             self._push(key)
             return True
         return False
@@ -83,14 +81,15 @@ class HybridCache(BaseCache):
             self._push(k)
             return
         if len(self.main) >= self.main_cap:
-            v = self._peek(self._pheap, self.prefetched)
-            if v is None:
+            if self.prefetched:              # stale prefetches go first
+                victim, _ = self.prefetched.popitem(last=False)
+            else:
                 v = self._peek(self._mheap, self.main)
                 if v is None or v[0] > self.freq[k]:
                     return                   # gate closed: drop k
-            _, victim = v
+                victim = v[1]
             self.main.discard(victim)
-            self.prefetched.discard(victim)
+            self.prefetched.pop(victim, None)
         self.main.add(k)
         self._push(k)
 
@@ -114,17 +113,14 @@ class HybridCache(BaseCache):
             for k, _ in items:
                 if k in self.main or k in self.window:
                     continue
-                if len(self.prefetched) >= self.prefetch_budget:
-                    break
-                if len(self.main) >= self.main_cap:
-                    v = self._peek(self._pheap, self.prefetched)
-                    if v is None:
+                if (len(self.prefetched) >= self.prefetch_budget
+                        or len(self.main) >= self.main_cap):
+                    if not self.prefetched:
                         break                # never displace proven residents
-                    _, victim = v
+                    victim, _ = self.prefetched.popitem(last=False)
                     self.main.discard(victim)
-                    self.prefetched.discard(victim)
                 self.main.add(k)
-                self.prefetched.add(k)
+                self.prefetched[k] = True    # newest prefetch = last in LRU order
                 self._push(k)
         self._ops += 1
         if self._ops % self.age_every == 0:
@@ -132,6 +128,6 @@ class HybridCache(BaseCache):
                 self.freq[k] //= 2
                 if self.freq[k] == 0 and k not in self.main and k not in self.window:
                     del self.freq[k]
-            self._mheap, self._pheap = [], []
+            self._mheap = []
             for k in self.main:
                 self._push(k)

@@ -1,0 +1,201 @@
+{
+  "description": "Experiment 9 \u2014 the second win attempt: one cache policy for all workloads.\n\nexp4 found specialists: ghost-frequency LFU wins zipf, bounded-prefetch LRU\nwins drifting, uniform ties. HybridCache combines frequency-gated admission\nwith budget-bounded semantic prefetch.\n\nProtocol (pre-registered here):\n  1. Tune (prefetch_m, prefetch_frac) on SEED 0 only.\n  2. Freeze the winner; evaluate on seeds 1 and 2, never re-tuned.\n  3. Win condition: on every workload, hybrid's mean-across-capacities hit\n     rate >= the best exp4 arm for that workload (within 1 sd), on the\n     held-out seeds.\n\nRun with SEED=0 TUNE=1 for the tuning pass; SEED=n for evaluation passes.\n",
+  "seed": 0,
+  "capacities": [
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "tuning_grid": [
+    {
+      "window_frac": 0.05,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15313125,
+      "drifting": 0.07425625,
+      "uniform": 0.05050625,
+      "sum": 0.27789375
+    },
+    {
+      "window_frac": 0.05,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15336875,
+      "drifting": 0.07468125,
+      "uniform": 0.05071875,
+      "sum": 0.27876875
+    },
+    {
+      "window_frac": 0.05,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.1532125,
+      "drifting": 0.0742875,
+      "uniform": 0.05053125,
+      "sum": 0.27803125
+    },
+    {
+      "window_frac": 0.05,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15348125,
+      "drifting": 0.0747125,
+      "uniform": 0.050693749999999996,
+      "sum": 0.2788875
+    },
+    {
+      "window_frac": 0.1,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15164375,
+      "drifting": 0.07664375,
+      "uniform": 0.050681250000000004,
+      "sum": 0.27896875
+    },
+    {
+      "window_frac": 0.1,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15191875,
+      "drifting": 0.07694375,
+      "uniform": 0.0509375,
+      "sum": 0.2798
+    },
+    {
+      "window_frac": 0.1,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15170625,
+      "drifting": 0.07669375,
+      "uniform": 0.050743750000000004,
+      "sum": 0.27914375
+    },
+    {
+      "window_frac": 0.1,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15203125,
+      "drifting": 0.07699375,
+      "uniform": 0.050925,
+      "sum": 0.27995000000000003
+    },
+    {
+      "window_frac": 0.2,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.14874375,
+      "drifting": 0.07956875,
+      "uniform": 0.0504,
+      "sum": 0.27871250000000003
+    },
+    {
+      "window_frac": 0.2,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.14909375,
+      "drifting": 0.07983124999999999,
+      "uniform": 0.05059375,
+      "sum": 0.27951875
+    },
+    {
+      "window_frac": 0.2,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.14888125,
+      "drifting": 0.07955000000000001,
+      "uniform": 0.0504125,
+      "sum": 0.27884375
+    },
+    {
+      "window_frac": 0.2,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.14919375,
+      "drifting": 0.07993125000000001,
+      "uniform": 0.05059374999999999,
+      "sum": 0.27971875
+    },
+    {
+      "window_frac": 0.3,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.14593125,
+      "drifting": 0.0811125,
+      "uniform": 0.05014375,
+      "sum": 0.27718750000000003
+    },
+    {
+      "window_frac": 0.3,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.14626875,
+      "drifting": 0.08136875,
+      "uniform": 0.05033125,
+      "sum": 0.27796875
+    },
+    {
+      "window_frac": 0.3,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.14607499999999998,
+      "drifting": 0.08115,
+      "uniform": 0.0501625,
+      "sum": 0.2773875
+    },
+    {
+      "window_frac": 0.3,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.14635,
+      "drifting": 0.08144375000000001,
+      "uniform": 0.05033125,
+      "sum": 0.278125
+    },
+    {
+      "window_frac": 0.5,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.13880625,
+      "drifting": 0.08269375000000001,
+      "uniform": 0.0501375,
+      "sum": 0.2716375
+    },
+    {
+      "window_frac": 0.5,
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.1390875,
+      "drifting": 0.0828625,
+      "uniform": 0.05028125,
+      "sum": 0.27223125000000004
+    },
+    {
+      "window_frac": 0.5,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.138775,
+      "drifting": 0.0827625,
+      "uniform": 0.050093750000000006,
+      "sum": 0.27163125
+    },
+    {
+      "window_frac": 0.5,
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.1390625,
+      "drifting": 0.08289375,
+      "uniform": 0.05029375,
+      "sum": 0.27225
+    }
+  ],
+  "best": {
+    "window_frac": 0.1,
+    "prefetch_m": 100,
+    "prefetch_frac": 0.5,
+    "zipf": 0.15203125,
+    "drifting": 0.07699375,
+    "uniform": 0.050925,
+    "sum": 0.27995000000000003
+  }
+}
