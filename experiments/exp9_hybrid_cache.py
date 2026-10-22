@@ -40,16 +40,25 @@ rip = RippleEngine(n_neighbors=32, n_hyperplanes=10, decay=0.90, gamma=1.0,
                    theta=1e-4, n_entry=16, init_energy=4.0, seed=SEED)
 rip.build(X)
 
-streams = {}
-for workload in ["zipf", "drifting", "uniform"]:
-    Q, _ = make_queries(centers, N_STREAM, workload, spread=0.30, seed=4 + 10 * SEED)
-    needed, neighborhoods = [], []
-    with threadpool_limits(limits=1):
-        for q in Q:
-            needed.append(bf.query(q, k=K))
-            rip.query(q, k=K, learn=False)
-            neighborhoods.append(dict(rip.last_stats.activated_energy))
-    streams[workload] = (needed, neighborhoods)
+import pickle
+from pathlib import Path
+
+_cache = Path(f"/tmp/exp9_streams_seed{SEED}.pkl")
+if _cache.exists():
+    streams = pickle.loads(_cache.read_bytes())
+    print(f"streams loaded from {_cache}")
+else:
+    streams = {}
+    for workload in ["zipf", "drifting", "uniform"]:
+        Q, _ = make_queries(centers, N_STREAM, workload, spread=0.30, seed=4 + 10 * SEED)
+        needed, neighborhoods = [], []
+        with threadpool_limits(limits=1):
+            for q in Q:
+                needed.append(bf.query(q, k=K))
+                rip.query(q, k=K, learn=False)
+                neighborhoods.append(dict(rip.last_stats.activated_energy))
+        streams[workload] = (needed, neighborhoods)
+    _cache.write_bytes(pickle.dumps(streams))
 
 
 def run_policy(make_cache):
