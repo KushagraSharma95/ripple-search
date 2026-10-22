@@ -86,13 +86,16 @@ out = {"description": __doc__, "seed": SEED, "capacities": CAPACITIES}
 
 if TUNE:
     grid = []
-    for m in [20, 50, 100, 200]:
-        for frac in [0.1, 0.25, 0.5]:
-            r = run_policy(lambda cap, m=m, f=frac: HybridCache(cap, prefetch_m=m, prefetch_frac=f))
-            score = sum(r.values())
-            grid.append({"prefetch_m": m, "prefetch_frac": frac, **r, "sum": score})
-            print(f"m={m} frac={frac}: zipf={r['zipf']:.4f} drift={r['drifting']:.4f} "
-                  f"unif={r['uniform']:.4f} sum={score:.4f}")
+    for w in [0.05, 0.1, 0.2, 0.3, 0.5]:
+        for m in [50, 100]:
+            for frac in [0.25, 0.5]:
+                r = run_policy(lambda cap, w=w, m=m, f=frac: HybridCache(
+                    cap, prefetch_m=m, prefetch_frac=f, window_frac=w))
+                score = sum(r.values())
+                grid.append({"window_frac": w, "prefetch_m": m,
+                             "prefetch_frac": frac, **r, "sum": score})
+                print(f"w={w} m={m} frac={frac}: zipf={r['zipf']:.4f} "
+                      f"drift={r['drifting']:.4f} unif={r['uniform']:.4f} sum={score:.4f}")
     best = max(grid, key=lambda g: g["sum"])
     print("BEST:", best)
     out["tuning_grid"] = grid
@@ -101,9 +104,11 @@ if TUNE:
 else:
     M = int(os.environ.get("PREFETCH_M", "50"))
     FRAC = float(os.environ.get("PREFETCH_FRAC", "0.25"))
+    W = float(os.environ.get("WINDOW_FRAC", "0.1"))
     tau = N_STREAM / 20
     policies = {
-        "hybrid": lambda cap: HybridCache(cap, prefetch_m=M, prefetch_frac=FRAC),
+        "hybrid": lambda cap: HybridCache(cap, prefetch_m=M, prefetch_frac=FRAC,
+                                          window_frac=W),
         "lru": lambda cap: LRUCache(cap, prefetch=False),
         "lfu_plain": lambda cap: LFUPlainCache(cap),
         "lfu_ghost_admission": lambda cap: LFUCache(cap),

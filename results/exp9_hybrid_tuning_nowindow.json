@@ -1,0 +1,116 @@
+{
+  "description": "Experiment 9 \u2014 the second win attempt: one cache policy for all workloads.\n\nexp4 found specialists: ghost-frequency LFU wins zipf, bounded-prefetch LRU\nwins drifting, uniform ties. HybridCache combines frequency-gated admission\nwith budget-bounded semantic prefetch.\n\nProtocol (pre-registered here):\n  1. Tune (prefetch_m, prefetch_frac) on SEED 0 only.\n  2. Freeze the winner; evaluate on seeds 1 and 2, never re-tuned.\n  3. Win condition: on every workload, hybrid's mean-across-capacities hit\n     rate >= the best exp4 arm for that workload (within 1 sd), on the\n     held-out seeds.\n\nRun with SEED=0 TUNE=1 for the tuning pass; SEED=n for evaluation passes.\n",
+  "seed": 0,
+  "capacities": [
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "tuning_grid": [
+    {
+      "prefetch_m": 20,
+      "prefetch_frac": 0.1,
+      "zipf": 0.154125,
+      "drifting": 0.06861249999999999,
+      "uniform": 0.05064375,
+      "sum": 0.27338125
+    },
+    {
+      "prefetch_m": 20,
+      "prefetch_frac": 0.25,
+      "zipf": 0.1542625,
+      "drifting": 0.06881875,
+      "uniform": 0.050831249999999994,
+      "sum": 0.2739125
+    },
+    {
+      "prefetch_m": 20,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15448125,
+      "drifting": 0.06897500000000001,
+      "uniform": 0.050956249999999995,
+      "sum": 0.2744125
+    },
+    {
+      "prefetch_m": 50,
+      "prefetch_frac": 0.1,
+      "zipf": 0.1540875,
+      "drifting": 0.06851875,
+      "uniform": 0.050625,
+      "sum": 0.27323125
+    },
+    {
+      "prefetch_m": 50,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15446875,
+      "drifting": 0.06876874999999999,
+      "uniform": 0.050825,
+      "sum": 0.2740625
+    },
+    {
+      "prefetch_m": 50,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15469375000000002,
+      "drifting": 0.06916875,
+      "uniform": 0.05101875,
+      "sum": 0.27488125
+    },
+    {
+      "prefetch_m": 100,
+      "prefetch_frac": 0.1,
+      "zipf": 0.154175,
+      "drifting": 0.06860625000000001,
+      "uniform": 0.05065625,
+      "sum": 0.2734375
+    },
+    {
+      "prefetch_m": 100,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15444999999999998,
+      "drifting": 0.0687875,
+      "uniform": 0.0509125,
+      "sum": 0.27415
+    },
+    {
+      "prefetch_m": 100,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15480625,
+      "drifting": 0.06919375,
+      "uniform": 0.05104375,
+      "sum": 0.27504375000000003
+    },
+    {
+      "prefetch_m": 200,
+      "prefetch_frac": 0.1,
+      "zipf": 0.1541375,
+      "drifting": 0.06859375,
+      "uniform": 0.050618750000000004,
+      "sum": 0.27335
+    },
+    {
+      "prefetch_m": 200,
+      "prefetch_frac": 0.25,
+      "zipf": 0.15438125,
+      "drifting": 0.0687625,
+      "uniform": 0.050875,
+      "sum": 0.27401875
+    },
+    {
+      "prefetch_m": 200,
+      "prefetch_frac": 0.5,
+      "zipf": 0.15478750000000002,
+      "drifting": 0.0690375,
+      "uniform": 0.051199999999999996,
+      "sum": 0.275025
+    }
+  ],
+  "best": {
+    "prefetch_m": 100,
+    "prefetch_frac": 0.5,
+    "zipf": 0.15480625,
+    "drifting": 0.06919375,
+    "uniform": 0.05104375,
+    "sum": 0.27504375000000003
+  }
+}
