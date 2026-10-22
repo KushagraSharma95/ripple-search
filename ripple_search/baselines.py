@@ -2,12 +2,11 @@
 inverted index + BM25, the architecture Oracle Text uses), PostgreSQL
 full-text (a real enterprise RDBMS engine).
 
-Why no literal Teradata / Oracle: both are proprietary licensed engines that
-cannot be installed in an ephemeral container (Teradata Express is a
-registration-gated VM image; Oracle Database requires accepting OTN licenses
-and multi-GB images). Their text-search layers are inverted-index engines, so
-SQLite FTS5 and PostgreSQL GIN+tsvector are the faithful open proxies — see
-docs/METHODOLOGY.md.
+Oracle itself IS benchmarked directly in exp7_oracle_text.py (Oracle Database
+Free in a container, Oracle Text CONTEXT index, FUTC license verified — see
+docs/METHODOLOGY.md). Teradata cannot be run honestly (registration-gated VM,
+and it has no native full-text engine); for the text-search claim, FTS5 and
+PostgreSQL GIN+tsvector are its same-architecture open stand-ins.
 """
 
 from __future__ import annotations
@@ -91,10 +90,17 @@ class FTS5BM25:
 
 
 class PostgresFTS:
-    """PostgreSQL tsvector + GIN index with ts_rank ordering."""
+    """PostgreSQL tsvector + GIN index with ts_rank ordering.
 
-    def __init__(self, dsn: str = "dbname=ripple user=postgres host=/var/run/postgresql"):
+    `normalization` is ts_rank's document-length normalization bitmask (0 =
+    none, 2 = divide by document length, 32 = rank/(rank+1)). exp5 sweeps it
+    the same way Oracle's ranking operator was swept, and publishes the best.
+    """
+
+    def __init__(self, dsn: str = "dbname=ripple user=postgres host=/var/run/postgresql",
+                 normalization: int = 0):
         self.dsn = dsn
+        self.normalization = normalization
 
     def build(self, docs: list[str]) -> None:
         import psycopg2
@@ -120,7 +126,7 @@ class PostgresFTS:
         q = " | ".join(terms) if terms else "x"
         self.cur.execute(
             "SELECT id FROM docs, to_tsquery('english', %s) tq "
-            "WHERE tsv @@ tq ORDER BY ts_rank(tsv, tq) DESC LIMIT %s",
-            (q, k),
+            "WHERE tsv @@ tq ORDER BY ts_rank(tsv, tq, %s) DESC LIMIT %s",
+            (q, self.normalization, k),
         )
         return [r[0] for r in self.cur.fetchall()]

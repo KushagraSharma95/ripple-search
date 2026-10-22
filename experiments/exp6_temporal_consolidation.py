@@ -54,9 +54,18 @@ Q_old = doc_queries(old_ids, 200, seed=12)
 truth_recent = [bf.query(q, k=K) for q in Q_recent]
 truth_old = [bf.query(q, k=K) for q in Q_old]
 
+# Ground truth is over the FULL corpus, which is 90% archival — so even
+# "recent-seeded" queries have mostly-archival truth sets. Published so the
+# recall numbers cannot be read as "recall on recent data".
+recent_set = set(recent_ids.tolist())
+def _recent_frac(truths):
+    return float(np.mean([[i in recent_set for i in t] for t in truths]))
+truth_composition = {"recent_seeded_truth_recent_fraction": _recent_frac(truth_recent),
+                     "archive_seeded_truth_recent_fraction": _recent_frac(truth_old)}
+
 
 def evaluate(engine, Q, truth):
-    rec, vis, lat = [], [], []
+    rec, vis, dc, lat = [], [], [], []
     with threadpool_limits(limits=1):
         for q, t in zip(Q, truth):
             t0 = time.perf_counter()
@@ -64,8 +73,13 @@ def evaluate(engine, Q, truth):
             lat.append(time.perf_counter() - t0)
             rec.append(recall_at_k(r, t, K))
             vis.append(engine.last_stats.visited)
+            # The honest work metric: true distance computations, INCLUDING
+            # macro-member expansion after consolidation (visited alone counts
+            # only graph settles and understates post-consolidation work).
+            dc.append(engine.last_stats.dist_computations)
     return {"recall@10": float(np.mean(rec)),
             "mean_visited": float(np.mean(vis)),
+            "mean_dist_computations": float(np.mean(dc)),
             "p50_ms": float(np.percentile(lat, 50) * 1e3)}
 
 
@@ -85,11 +99,14 @@ after = {"recent_queries": evaluate(rip, Q_recent, truth_recent),
 out = {"description": __doc__, "n": N, "macro_nodes_created": n_macro,
        "active_original_nodes_after": active,
        "compression_ratio": float(N / max(active + n_macro, 1)),
+       "truth_composition": truth_composition,
        "before": before, "after": after}
 print("macro nodes:", n_macro, "| active originals:", active)
+print("truth composition:", truth_composition)
 for era in ["recent_queries", "old_queries"]:
     print(f"{era}: recall {before[era]['recall@10']:.3f} -> {after[era]['recall@10']:.3f}, "
           f"visited {before[era]['mean_visited']:.0f} -> {after[era]['mean_visited']:.0f}, "
+          f"dists {before[era]['mean_dist_computations']:.0f} -> {after[era]['mean_dist_computations']:.0f}, "
           f"p50 {before[era]['p50_ms']:.2f} -> {after[era]['p50_ms']:.2f}ms")
 
 save("exp6_temporal_consolidation", out)

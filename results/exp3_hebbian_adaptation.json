@@ -2,6 +2,7 @@
   "description": "Experiment 3 \u2014 CLAIM: \"the network organically self-optimizes, burning\nhighly traveled paths into permanent shortcuts; as more query cycles enter the\nsystem the search becomes more intelligent, faster, and more precise.\"\n\nTest: identical twin engines (same build, same seed), one adaptive (Hebbian +\nshortcut burning ON), one frozen. Stream 4,000 queries from workloads with\nexploitable locality (zipf, drifting). Per 250-query window measure work\n(nodes visited, distance computations) and recall@10 vs exact truth.\n\nAlso the catch the hypothesis never mentions: after adapting, evaluate both\ntwins on 300 UNIFORM out-of-distribution queries. If adaptation warps the\ngraph toward the hot topics, OOD recall should reveal the price.\n",
   "n": 20000,
   "d": 64,
+  "seed": 0,
   "workloads": {
     "zipf": {
       "windows": {
@@ -211,6 +212,13 @@
           "recall@10": 0.9580000000000001,
           "mean_visited": 10423.496666666666
         }
+      },
+      "paired_adaptive_minus_frozen": {
+        "mean_recall_delta": 0.006524999999999982,
+        "recall_delta_windows_positive": 16,
+        "n_windows": 16,
+        "mean_visited_delta": 505.9842500000003,
+        "mean_visited_delta_pct": 4.847990990121124
       }
     },
     "drifting": {
@@ -421,6 +429,13 @@
           "recall@10": 0.9580000000000001,
           "mean_visited": 10423.496666666666
         }
+      },
+      "paired_adaptive_minus_frozen": {
+        "mean_recall_delta": 0.005749999999999998,
+        "recall_delta_windows_positive": 16,
+        "n_windows": 16,
+        "mean_visited_delta": 462.71725000000015,
+        "mean_visited_delta_pct": 4.454704066012654
       }
     }
   }

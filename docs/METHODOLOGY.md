@@ -85,7 +85,29 @@ Algorithms*, Information Systems 2020):
   *scaling shapes* (the claims under test) are visible well below that.
 - The ripple engine is a faithful but single implementation of prose; other
   parameterizations of "energy physics" exist. The calibration sweep explores
-  48 configurations to reduce the strawman risk.
+  176 configurations across two stages (48 physics + 128 address-width/
+  energy) to reduce the strawman risk. One documented deviation: nodes settle
+  on their single largest incoming energy contribution rather than on
+  accumulated incoming energy (an implementation choice; an accumulate-
+  then-fire variant is a possible follow-up).
+- Adaptive-mechanism hyperparameters (hebbian_eta/cap/relax, shortcut budget,
+  cache tau/heat scale) were set a priori, not swept by the calibration —
+  C3/C4 verdicts are about the mechanism as parameterized here; exp3/exp4 are
+  run over multiple seeds to bound seed variance.
+- Build-time threading is asymmetric: HNSW's build is pinned to one thread
+  while the ripple's exact-kNN build uses multithreaded BLAS — so published
+  build times favor the ripple engine and are not comparable across engines.
+  Query timing is single-threaded for all engines.
+- Wall-clock comparisons between this pure-Python engine and C/C++ engines
+  (hnswlib, FTS5, Oracle) carry interpreter overhead of roughly two orders
+  of magnitude per unit of work; algorithmic conclusions are therefore drawn
+  from work counters (nodes visited, distance computations), and wall-clock
+  figures are labeled as prototype numbers.
+- Vector engines' latencies exclude query embedding; the per-query (single-
+  query, not batch-amortized) embedding cost is measured and published
+  separately in exp5 so end-to-end comparisons can be made.
+- Reuters category-P@10 at n=300 has SE ≈ 0.014 (per-query sd ≈ 0.25), so
+  differences under ~0.03 between engines are within sampling noise.
 - Latency comparisons between text engines (FTS5, PostgreSQL) and vector
   engines (ripple, HNSW, brute force) cross modalities: they answer "which
   system answers a topical query faster at what quality", not "which

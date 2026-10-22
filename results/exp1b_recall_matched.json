@@ -1,67 +1,67 @@
 {
   "description": "Experiment 1b \u2014 recall-matched comparison at N=100k.\n\nexp1 holds every engine at fixed parameters while N grows, so at N=100k the\nripple (quality config) sits at recall 0.87 and HNSW at ef=64 sits at 0.64 \u2014\ndifferent quality points, not directly comparable. This experiment sweeps\nHNSW's ef at N=100k to find its latency AT OR ABOVE the ripple's measured\nrecall, so the headline comparison is recall-matched rather than asserted.\n",
   "n": 100000,
-  "hnsw_build_s": 30.230050880998533,
+  "hnsw_build_s": 22.077573413999744,
   "ripple_reference": {
-    "build_s": 125.58502697299991,
-    "mean_ms": 182.59504588501613,
-    "p50_ms": 169.8302849999891,
-    "p95_ms": 336.64620289998766,
-    "qps_single_thread": 5.476599845045745,
+    "build_s": 89.70050981199984,
+    "mean_ms": 135.27794297500577,
+    "p50_ms": 123.55962400033604,
+    "p95_ms": 258.9742540502357,
+    "qps_single_thread": 7.39218809813483,
     "recall@10": 0.8690000000000001,
-    "mean_visited": 27391.063636363637,
-    "mean_dist_computations": 27391.063636363637,
-    "visited_fraction_of_n": 0.2739106363636364
+    "mean_visited": 27012.995,
+    "mean_dist_computations": 27012.995,
+    "visited_fraction_of_n": 0.27012995
   },
   "hnsw_ef_sweep": [
     {
       "ef": 64,
-      "mean_ms": 0.09304539003096579,
-      "p50_ms": 0.08461599918518914,
-      "p95_ms": 0.14637535041401858,
-      "qps_single_thread": 10747.442723032242,
+      "mean_ms": 0.0706829650380314,
+      "p50_ms": 0.06628600021940656,
+      "p95_ms": 0.09576274965183984,
+      "qps_single_thread": 14147.680412981317,
       "recall@10": 0.636
     },
     {
       "ef": 128,
-      "mean_ms": 0.18429833497066284,
-      "p50_ms": 0.1773094991222024,
-      "p95_ms": 0.23662169969611566,
-      "qps_single_thread": 5425.984994162769,
+      "mean_ms": 0.1334730300004594,
+      "p50_ms": 0.12664800033235224,
+      "p95_ms": 0.17349644967907804,
+      "qps_single_thread": 7492.150286814933,
       "recall@10": 0.7909999999999999
     },
     {
       "ef": 256,
-      "mean_ms": 0.34847405496293504,
-      "p50_ms": 0.3484230010144529,
-      "p95_ms": 0.40705455003262614,
-      "qps_single_thread": 2869.654098370002,
+      "mean_ms": 0.2573465900013616,
+      "p50_ms": 0.24951700061137672,
+      "p95_ms": 0.3059330005271474,
+      "qps_single_thread": 3885.8101830481182,
       "recall@10": 0.8975
     },
     {
       "ef": 512,
-      "mean_ms": 0.6234272599704127,
-      "p50_ms": 0.626557500254421,
-      "p95_ms": 0.687386300342041,
-      "qps_single_thread": 1604.0363715366875,
+      "mean_ms": 0.51038139999946,
+      "p50_ms": 0.49629349950919277,
+      "p95_ms": 0.6061837501874833,
+      "qps_single_thread": 1959.319050422014,
       "recall@10": 0.9690000000000001
     },
     {
       "ef": 1024,
-      "mean_ms": 1.2820596500205284,
-      "p50_ms": 1.1837094998554676,
-      "p95_ms": 1.6305220499816642,
-      "qps_single_thread": 779.9949089607398,
+      "mean_ms": 1.0356450500285064,
+      "p50_ms": 0.9328329997515539,
+      "p95_ms": 1.4775953996831956,
+      "qps_single_thread": 965.5817888305213,
       "recall@10": 0.9940000000000001
     }
   ],
   "hnsw_at_matched_recall": {
     "ef": 256,
-    "mean_ms": 0.34847405496293504,
-    "p50_ms": 0.3484230010144529,
-    "p95_ms": 0.40705455003262614,
-    "qps_single_thread": 2869.654098370002,
+    "mean_ms": 0.2573465900013616,
+    "p50_ms": 0.24951700061137672,
+    "p95_ms": 0.3059330005271474,
+    "qps_single_thread": 3885.8101830481182,
     "recall@10": 0.8975
   },
-  "latency_ratio_p50": 487.42558472178587
+  "latency_ratio_p50": 495.1952119398086
 }

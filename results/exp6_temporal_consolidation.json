@@ -4,28 +4,36 @@
   "macro_nodes_created": 4070,
   "active_original_nodes_after": 5063,
   "compression_ratio": 5.474652359575167,
+  "truth_composition": {
+    "recent_seeded_truth_recent_fraction": 0.1895,
+    "archive_seeded_truth_recent_fraction": 0.0905
+  },
   "before": {
     "recent_queries": {
       "recall@10": 0.903,
       "mean_visited": 17823.495,
-      "p50_ms": 98.21288249986537
+      "mean_dist_computations": 17823.495,
+      "p50_ms": 80.6190510002125
     },
     "old_queries": {
       "recall@10": 0.9180000000000001,
       "mean_visited": 18608.29,
-      "p50_ms": 108.63632300015524
+      "mean_dist_computations": 18608.29,
+      "p50_ms": 90.20616699990569
     }
   },
   "after": {
     "recent_queries": {
       "recall@10": 0.8025,
       "mean_visited": 2620.945,
-      "p50_ms": 69.29937450013313
+      "mean_dist_computations": 29829.41,
+      "p50_ms": 61.31509750002806
     },
     "old_queries": {
       "recall@10": 0.8530000000000001,
       "mean_visited": 2621.305,
-      "p50_ms": 73.79387399987536
+      "mean_dist_computations": 29894.91,
+      "p50_ms": 60.39905500006171
     }
   }
 }

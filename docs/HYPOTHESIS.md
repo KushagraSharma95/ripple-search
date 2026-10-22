@@ -87,13 +87,18 @@ Tested by: `exp6_temporal_consolidation.py`.
 The user's direct question: is this faster than search in Teradata or Oracle
 databases?
 
-Neither engine can be installed in this environment (proprietary licenses,
-registration-gated multi-GB images). Both execute text search on inverted
-index architectures (Oracle Text CONTEXT index; Teradata has no native
-full-text engine comparable to Oracle Text — text workloads are typically
-handled via LIKE scans, external indexing, or UDFs). The faithful,
-same-architecture open proxies used here: SQLite FTS5 (C inverted index +
-BM25) and PostgreSQL tsvector/GIN (enterprise RDBMS full-text). See
-`docs/METHODOLOGY.md` for the full argument.
+Oracle IS tested directly: Oracle Database Free (26ai) runs in a container
+under the Free Use Terms and Conditions (read in full — no benchmark-
+disclosure clause; see `docs/METHODOLOGY.md`), and `exp7_oracle_text.py`
+benchmarks its Oracle Text CONTEXT inverted index on the same corpus and
+queries as every other engine. Teradata cannot be run honestly here
+(registration-gated VM distribution) and has no native full-text engine
+comparable to Oracle Text — text workloads are typically handled via LIKE
+scans, external indexing, or UDFs; its identity is hash-distributed
+relational access, which is ~O(1) in N for primary-index lookups. For the
+text-search claim its same-architecture open stand-ins are SQLite FTS5 (C
+inverted index + BM25) and PostgreSQL tsvector/GIN.
 
-Tested by: `exp5_real_text.py` on Reuters-21578.
+Tested by: `exp5_real_text.py`, `exp5b_short_queries.py`,
+`exp7_oracle_text.py` on Reuters-21578; N-scaling of a real inverted index
+in `exp1c_fts5_scaling.py`.

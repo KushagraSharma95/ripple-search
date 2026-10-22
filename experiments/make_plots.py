@@ -109,11 +109,13 @@ if d:
 d = load("exp4_thermo_cache")
 if d:
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.2), sharey=True)
-    policies = ["lru", "lfu", "lru_prefetch_all", "lru_prefetch_top100",
-                "thermo_exact", "thermo_prefetch"]
-    colors = ["#7f7f7f", "#bcbd22", "#17becf", "#1f77b4", "#ff7f0e", "#d62728"]
+    policies = ["lru", "lfu_plain", "lfu_ghost_admission", "lru_prefetch_all",
+                "lru_prefetch_top100", "thermo_exact", "thermo_prefetch",
+                "thermo_prefetch_top100"]
+    colors = ["#7f7f7f", "#bcbd22", "#8c564b", "#17becf", "#1f77b4",
+              "#ff7f0e", "#d62728", "#e377c2"]
     for ax, wl in zip(axes, d["workloads"]):
-        rows = d["workloads"][wl]
+        rows = d["workloads"][wl]["by_capacity"]
         caps = [r["capacity"] for r in rows]
         for pol, c in zip(policies, colors):
             ax.plot(caps, [r[pol] for r in rows], "o-", color=c, label=pol)

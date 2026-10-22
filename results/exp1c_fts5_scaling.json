@@ -1,0 +1,63 @@
+{
+  "description": "Experiment 1c \u2014 measured N-scaling of a real inverted index (C1b).\n\nThe hypothesis's premise: \"traditional engines slow down linearly or\nquadratically as data grows.\" C1b's refutation must be MEASURED, not argued\nfrom complexity theory alone \u2014 so: SQLite FTS5 (a production C inverted\nindex) on synthetic Zipf-vocabulary documents from 2k to 200k docs, identical\n10-term queries at every size, p50/p95 per size, build time separate.\n",
+  "vocab": 30000,
+  "doc_len": 80,
+  "rows": [
+    {
+      "n": 2000,
+      "build_s": 0.03977277900003173,
+      "mean_ms": 3.140604570010055,
+      "p50_ms": 2.9802564999954484,
+      "p95_ms": 4.812222849773205,
+      "qps_single_thread": 318.41003147900227
+    },
+    {
+      "n": 5000,
+      "build_s": 0.05860815799996999,
+      "mean_ms": 7.84256353001183,
+      "p50_ms": 7.189738999841211,
+      "p95_ms": 13.75393825001083,
+      "qps_single_thread": 127.50932729753629
+    },
+    {
+      "n": 10000,
+      "build_s": 0.14794533900021634,
+      "mean_ms": 15.510787085015636,
+      "p50_ms": 14.535335000118721,
+      "p95_ms": 25.48228775017377,
+      "qps_single_thread": 64.47126084053212
+    },
+    {
+      "n": 20000,
+      "build_s": 0.3115325069998107,
+      "mean_ms": 29.89477233498519,
+      "p50_ms": 29.51440549986728,
+      "p95_ms": 42.971101149692,
+      "qps_single_thread": 33.450664510654995
+    },
+    {
+      "n": 50000,
+      "build_s": 0.8463979049997761,
+      "mean_ms": 73.76649100499662,
+      "p50_ms": 70.25358300006701,
+      "p95_ms": 110.36865125010988,
+      "qps_single_thread": 13.556290754460102
+    },
+    {
+      "n": 100000,
+      "build_s": 1.8163385910002035,
+      "mean_ms": 146.19620328998508,
+      "p50_ms": 141.619116000129,
+      "p95_ms": 214.08614445003877,
+      "qps_single_thread": 6.840122913564769
+    },
+    {
+      "n": 200000,
+      "build_s": 3.9308918960000483,
+      "mean_ms": 294.7041272249862,
+      "p50_ms": 287.3045195001396,
+      "p95_ms": 414.01127830019954,
+      "qps_single_thread": 3.39323378133951
+    }
+  ]
+}

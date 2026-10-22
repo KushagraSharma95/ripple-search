@@ -66,8 +66,39 @@ class LRUCache(BaseCache):
                     self.store.popitem(last=False)
 
 
+class LFUPlainCache(BaseCache):
+    """Textbook in-cache LFU: frequency tracked only while resident, counts
+    deleted on eviction, every new item admitted (evicting the lowest-
+    frequency resident). The contrast class for LFUCache below, which keeps
+    ghost frequencies for non-resident keys and gates admission on them —
+    making it a TinyLFU-family policy, not 'plain LFU'."""
+
+    def __init__(self, capacity: int):
+        super().__init__(capacity)
+        self.freq: dict = {}
+
+    def contains(self, key, now) -> bool:
+        if key in self.freq:
+            self.freq[key] += 1
+            return True
+        return False
+
+    def admit(self, exact_keys, neighborhood, now) -> None:
+        for k in exact_keys:
+            if k in self.freq:
+                self.freq[k] += 1
+                continue
+            if len(self.freq) >= self.capacity:
+                victim = min(self.freq, key=self.freq.get)
+                del self.freq[victim]
+            self.freq[k] = 1
+
+
 class LFUCache(BaseCache):
-    """Simple LFU with aperiodic halving to avoid unbounded counts."""
+    """LFU with GHOST frequencies and frequency-gated admission (keeps counts
+    for non-resident keys; refuses admission when the coldest resident has a
+    higher count). Strictly stronger than plain LFU — this is TinyLFU-family
+    behavior, and it is labeled `lfu_ghost_admission` in exp4's results."""
 
     def __init__(self, capacity: int):
         super().__init__(capacity)

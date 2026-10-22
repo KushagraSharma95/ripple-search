@@ -64,6 +64,8 @@ for n in SIZES:
 
         with threadpool_limits(limits=1):
             res, lat = time_queries(rip_query, Q, k=K)
+        # The closure also fired during warmup; counters cover timed calls only.
+        visited, dists = visited[-len(Q):], dists[-len(Q):]
         row["engines"][cfg_name] = {
             "build_s": rip_build, **summarize(lat),
             "recall@10": float(np.mean([recall_at_k(r, t, K) for r, t in zip(res, truth)])),
@@ -87,15 +89,18 @@ for n in SIZES:
         t0 = time.perf_counter()
         vp = VPTree(X, seed=0)
         vp_build = time.perf_counter() - t0
-        counts, res, lat_list = [], [], []
-        for q in Q:
-            t0 = time.perf_counter()
-            r, c = vp.query(q, k=K)
-            lat_list.append(time.perf_counter() - t0)
-            res.append(r)
+        counts = []
+
+        def vp_query(q, k=K):
+            r, c = vp.query(q, k=k)
             counts.append(c)
+            return r
+
+        with threadpool_limits(limits=1):
+            res, lat = time_queries(vp_query, Q, k=K)
+        counts = counts[-len(Q):]
         row["engines"]["vp_tree"] = {
-            "build_s": vp_build, **summarize(np.array(lat_list)),
+            "build_s": vp_build, **summarize(lat),
             "recall@10": float(np.mean([recall_at_k(r, t, K) for r, t in zip(res, truth)])),
             "mean_dist_computations": float(np.mean(counts)),
             "dist_fraction_of_n": float(np.mean(counts) / n),

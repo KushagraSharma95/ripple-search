@@ -1,0 +1,187 @@
+{
+  "description": "Experiment 4 \u2014 CLAIM: thermodynamic caching (\"pump the whole activated\nneighborhood into cache with energy-proportional temperature, evict by natural\ndissipation\") beats reactive LRU/LFU.\n\nTest: generate query streams; for each query the \"needed set\" is the exact\ntop-10 documents. Probe the cache for the needed set (hits counted BEFORE\nadmission), then admit this query's results. Grid of policies ablating the two\nbundled mechanisms:\n\n    lru                   classic LRU, exact items only\n    lfu_plain             textbook in-cache LFU, exact items only\n    lfu_ghost_admission   LFU with ghost counts + gated admission (TinyLFU-family)\n    lru_prefetch_all      LRU eviction, FULL activated-neighborhood admission\n    lru_prefetch_top100   LRU eviction, top-100-energy bounded admission\n    thermo_exact          temperature eviction, exact items only\n    thermo_prefetch       temperature eviction, FULL neighborhood (the claim)\n    thermo_prefetch_top100  temperature eviction, bounded admission\n\nWorkloads: zipf (locality), drifting (the hypothesis's \"train of thought\"),\nuniform (no locality \u2014 where prefetch should pollute and HURT).\n",
+  "n": 20000,
+  "capacities": [
+    250,
+    500,
+    1000,
+    2000
+  ],
+  "seed": 2,
+  "workloads": {
+    "zipf": {
+      "by_capacity": [
+        {
+          "capacity": 250,
+          "lru": 0.027325,
+          "lfu_plain": 0.0505,
+          "lfu_ghost_admission": 0.083375,
+          "lru_prefetch_all": 0.012675,
+          "lru_prefetch_top100": 0.017175,
+          "thermo_exact": 0.044625,
+          "thermo_prefetch": 0.0458,
+          "thermo_prefetch_top100": 0.0444
+        },
+        {
+          "capacity": 500,
+          "lru": 0.05185,
+          "lfu_plain": 0.08495,
+          "lfu_ghost_admission": 0.1159,
+          "lru_prefetch_all": 0.024225,
+          "lru_prefetch_top100": 0.032025,
+          "thermo_exact": 0.0724,
+          "thermo_prefetch": 0.075625,
+          "thermo_prefetch_top100": 0.07405
+        },
+        {
+          "capacity": 1000,
+          "lru": 0.096575,
+          "lfu_plain": 0.133225,
+          "lfu_ghost_admission": 0.1593,
+          "lru_prefetch_all": 0.050125,
+          "lru_prefetch_top100": 0.063425,
+          "thermo_exact": 0.1158,
+          "thermo_prefetch": 0.11925,
+          "thermo_prefetch_top100": 0.11795
+        },
+        {
+          "capacity": 2000,
+          "lru": 0.17275,
+          "lfu_plain": 0.209225,
+          "lfu_ghost_admission": 0.22495,
+          "lru_prefetch_all": 0.10045,
+          "lru_prefetch_top100": 0.12605,
+          "thermo_exact": 0.18685,
+          "thermo_prefetch": 0.194075,
+          "thermo_prefetch_top100": 0.19155
+        }
+      ],
+      "mean_across_capacities": {
+        "lru": 0.087125,
+        "lfu_plain": 0.119475,
+        "lfu_ghost_admission": 0.14588125,
+        "lru_prefetch_all": 0.04686875,
+        "lru_prefetch_top100": 0.05966874999999999,
+        "thermo_exact": 0.10491875,
+        "thermo_prefetch": 0.10868749999999999,
+        "thermo_prefetch_top100": 0.1069875
+      }
+    },
+    "drifting": {
+      "by_capacity": [
+        {
+          "capacity": 250,
+          "lru": 0.0471,
+          "lfu_plain": 0.02255,
+          "lfu_ghost_admission": 0.022775,
+          "lru_prefetch_all": 0.011025,
+          "lru_prefetch_top100": 0.032625,
+          "thermo_exact": 0.044625,
+          "thermo_prefetch": 0.04535,
+          "thermo_prefetch_top100": 0.0452
+        },
+        {
+          "capacity": 500,
+          "lru": 0.064425,
+          "lfu_plain": 0.0422,
+          "lfu_ghost_admission": 0.0395,
+          "lru_prefetch_all": 0.0222,
+          "lru_prefetch_top100": 0.05795,
+          "thermo_exact": 0.063225,
+          "thermo_prefetch": 0.064325,
+          "thermo_prefetch_top100": 0.063525
+        },
+        {
+          "capacity": 1000,
+          "lru": 0.09165,
+          "lfu_plain": 0.0778,
+          "lfu_ghost_admission": 0.0706,
+          "lru_prefetch_all": 0.04645,
+          "lru_prefetch_top100": 0.09925,
+          "thermo_exact": 0.0914,
+          "thermo_prefetch": 0.093375,
+          "thermo_prefetch_top100": 0.092375
+        },
+        {
+          "capacity": 2000,
+          "lru": 0.1383,
+          "lfu_plain": 0.138025,
+          "lfu_ghost_admission": 0.1288,
+          "lru_prefetch_all": 0.098525,
+          "lru_prefetch_top100": 0.161225,
+          "thermo_exact": 0.140225,
+          "thermo_prefetch": 0.144425,
+          "thermo_prefetch_top100": 0.142775
+        }
+      ],
+      "mean_across_capacities": {
+        "lru": 0.08536875,
+        "lfu_plain": 0.07014375,
+        "lfu_ghost_admission": 0.06541875,
+        "lru_prefetch_all": 0.04455,
+        "lru_prefetch_top100": 0.08776250000000001,
+        "thermo_exact": 0.08486874999999999,
+        "thermo_prefetch": 0.08686875,
+        "thermo_prefetch_top100": 0.08596875000000001
+      }
+    },
+    "uniform": {
+      "by_capacity": [
+        {
+          "capacity": 250,
+          "lru": 0.012725,
+          "lfu_plain": 0.012575,
+          "lfu_ghost_admission": 0.0149,
+          "lru_prefetch_all": 0.01285,
+          "lru_prefetch_top100": 0.011825,
+          "thermo_exact": 0.012625,
+          "thermo_prefetch": 0.013,
+          "thermo_prefetch_top100": 0.0127
+        },
+        {
+          "capacity": 500,
+          "lru": 0.026175,
+          "lfu_plain": 0.025975,
+          "lfu_ghost_admission": 0.0292,
+          "lru_prefetch_all": 0.025825,
+          "lru_prefetch_top100": 0.024725,
+          "thermo_exact": 0.025725,
+          "thermo_prefetch": 0.02595,
+          "thermo_prefetch_top100": 0.02575
+        },
+        {
+          "capacity": 1000,
+          "lru": 0.0513,
+          "lfu_plain": 0.052525,
+          "lfu_ghost_admission": 0.05635,
+          "lru_prefetch_all": 0.0517,
+          "lru_prefetch_top100": 0.051625,
+          "thermo_exact": 0.05145,
+          "thermo_prefetch": 0.0521,
+          "thermo_prefetch_top100": 0.05175
+        },
+        {
+          "capacity": 2000,
+          "lru": 0.101425,
+          "lfu_plain": 0.1051,
+          "lfu_ghost_admission": 0.109225,
+          "lru_prefetch_all": 0.101175,
+          "lru_prefetch_top100": 0.103075,
+          "thermo_exact": 0.102425,
+          "thermo_prefetch": 0.104825,
+          "thermo_prefetch_top100": 0.10405
+        }
+      ],
+      "mean_across_capacities": {
+        "lru": 0.04790625,
+        "lfu_plain": 0.04904375,
+        "lfu_ghost_admission": 0.05241875,
+        "lru_prefetch_all": 0.0478875,
+        "lru_prefetch_top100": 0.0478125,
+        "thermo_exact": 0.04805625,
+        "thermo_prefetch": 0.04896875,
+        "thermo_prefetch_top100": 0.0485625
+      }
+    }
+  }
+}

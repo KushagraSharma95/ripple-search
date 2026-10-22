@@ -69,11 +69,23 @@ def lead_words(t: str, n: int = 40) -> str:
 
 
 q_texts = [lead_words(texts[i]) for i in q_ids]
-t0 = time.perf_counter()
 q_tfidf = vec.transform(q_texts)
 Qe = svd.transform(q_tfidf).astype(np.float32)
 Qe /= np.clip(np.linalg.norm(Qe, axis=1, keepdims=True), 1e-9, None)
-q_embed_time = (time.perf_counter() - t0) / N_QUERIES
+
+# Per-query embedding cost, measured one query at a time (what a live system
+# pays per request — batch-amortized numbers understate it ~65x). This cost
+# applies to EVERY vector engine (brute force, HNSW, ripple) on top of its
+# search latency; text engines parse inside their own timed query call.
+from _common import threadpool_limits as _tpl
+
+with _tpl(limits=1):
+    _lat = []
+    for t in q_texts:
+        t0 = time.perf_counter()
+        v = svd.transform(vec.transform([t]))
+        _lat.append(time.perf_counter() - t0)
+q_embed_time = float(np.median(_lat))
 
 
 def category_p_at_10(results: list[list[int]]) -> float:
@@ -118,6 +130,7 @@ def rip_query(q, k=K + 1):
 
 with threadpool_limits(limits=1):
     res, lat = time_queries(rip_query, Qe)
+visited = visited[-len(Qe):]  # drop warmup-call counters
 out["engines"]["ripple"] = {
     "build_s": b, **summarize(lat),
     "recall@10_vs_exact": float(np.mean([recall_at_k(r, t, K) for r, t in zip(res, truth)])),
@@ -147,13 +160,25 @@ out["engines"]["sqlite_fts5_bm25"] = {"build_s": b, **summarize(lat),
                                       "category_p@10": category_p_at_10(res)}
 
 try:
+    # Sweep ts_rank's length-normalization the way Oracle's operator was
+    # swept; publish the best-quality setting and the sweep itself.
     pg = PostgresFTS()
     t0 = time.perf_counter()
     pg.build(texts)
     b = time.perf_counter() - t0
-    res, lat = time_queries(pg.query, q_texts, k=K + 1)
-    out["engines"]["postgres_fts_gin"] = {"build_s": b, **summarize(lat),
-                                          "category_p@10": category_p_at_10(res)}
+    pg.cur.execute("SET max_parallel_workers_per_gather = 0")
+    sweep = {}
+    best = None
+    for norm in [0, 2, 32]:
+        pg.normalization = norm
+        res, lat = time_queries(pg.query, q_texts, k=K + 1)
+        entry = {"normalization": norm, **summarize(lat),
+                 "category_p@10": category_p_at_10(res)}
+        sweep[norm] = entry
+        if best is None or entry["category_p@10"] > best["category_p@10"]:
+            best = entry
+    out["engines"]["postgres_fts_gin"] = {"build_s": b, **best,
+                                          "normalization_sweep": sweep}
 except Exception as e:  # pragma: no cover
     out["engines"]["postgres_fts_gin"] = {"error": str(e)}
     print("postgres failed:", e, file=sys.stderr)
