@@ -40,6 +40,8 @@ def pareto(points):
 
 
 def evaluate(bs, Q, truth, mode, params):
+    """params: list of ints (fixed ef / patience) or (ef, patience) tuples
+    for early_exit."""
     rows = []
     with threadpool_limits(limits=1):
         for val in params:
@@ -48,13 +50,15 @@ def evaluate(bs, Q, truth, mode, params):
                 t0 = time.perf_counter()
                 if mode == "fixed":
                     r = bs.query(q, k=K, mode="fixed", ef=val)
-                else:
+                elif mode == "patience":
                     r = bs.query(q, k=K, mode="patience", patience=val)
+                else:
+                    r = bs.query(q, k=K, mode="early_exit", ef=val[0], patience=val[1])
                 lat.append(time.perf_counter() - t0)
                 rec.append(recall_at_k(r, t, K))
                 dists.append(bs.last_dist_count)
             rows.append({
-                "param": val,
+                "param": val if isinstance(val, int) else list(val),
                 "recall@10": float(np.mean(rec)),
                 "mean_dists": float(np.mean(dists)),
                 "p95_dists": float(np.percentile(dists, 95)),
@@ -125,14 +129,23 @@ for name, (Xd, Qd) in datasets.items():
     build_s = time.perf_counter() - t0
     print(" fixed-ef sweep:")
     fixed = evaluate(bs, Qd, truth, "fixed", EFS)
-    print(" patience sweep:")
+    print(" patience sweep (naive, unbounded beam):")
     adaptive = evaluate(bs, Qd, truth, "patience", PATIENCES)
+    print(" early-exit grid (beam bound + stall exit):")
+    grid = [(ef, p) for ef in [32, 48, 64, 96, 128, 192, 256]
+            for p in [4, 8, 16, 32]]
+    early = evaluate(bs, Qd, truth, "early_exit", grid)
     dom = dominance(fixed, adaptive)
-    for d in dom:
-        print(f"  recall>={d['recall_target']:.3f}: fixed ef={d['fixed_ef']} "
-              f"({d['fixed_dists']:.0f} dists) vs patience={d['adaptive_patience']} "
-              f"({d['adaptive_dists']:.0f} dists) -> saves {d['work_saved_pct']:.0f}%")
+    dom_early = dominance(fixed, early)
+    for label, d_rows in [("patience", dom), ("early_exit", dom_early)]:
+        print(f" vs fixed, {label}:")
+        for d in d_rows:
+            print(f"  recall>={d['recall_target']:.3f}: fixed ef={d['fixed_ef']} "
+                  f"({d['fixed_dists']:.0f}) vs {d['adaptive_patience']} "
+                  f"({d['adaptive_dists']:.0f}) -> saves {d['work_saved_pct']:.0f}%")
     out["datasets"][name] = {"build_s": build_s, "fixed": fixed,
-                             "adaptive": adaptive, "dominance": dom}
+                             "adaptive": adaptive, "early_exit": early,
+                             "dominance_patience": dom,
+                             "dominance_early_exit": dom_early}
 
 save("exp8_adaptive_termination", out)

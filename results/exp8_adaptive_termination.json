@@ -1,0 +1,218 @@
+{
+  "description": "Experiment 8 \u2014 the win attempt: adaptive early termination vs fixed ef.\n\nShipped graph-search libraries use one fixed search budget (ef) for every\nquery. Query difficulty varies wildly, so a per-query stopping rule should\ndominate: easy queries stop early, hard ones keep going. Same graph, same\nentry points, same code path \u2014 ONLY the termination policy differs.\n\nWin condition: the patience policy's recall-vs-work Pareto front dominates\nthe fixed-ef front (fewer mean distance computations at equal or better\nrecall), on both synthetic (N=100k, D=64) and real text (Reuters LSA-256)\ncorpora. Work is counted in true similarity evaluations, so the result is\nimplementation-independent.\n",
+  "k": 10,
+  "datasets": {
+    "synthetic_100k_d64": {
+      "build_s": 127.499283838,
+      "fixed": [
+        {
+          "param": 10,
+          "recall@10": 0.3073333333333333,
+          "mean_dists": 480.20666666666665,
+          "p95_dists": 639.9500000000003,
+          "p50_ms": 1.0334034999459618
+        },
+        {
+          "param": 16,
+          "recall@10": 0.39233333333333337,
+          "mean_dists": 658.5366666666666,
+          "p95_dists": 878.45,
+          "p50_ms": 1.4776095000570422
+        },
+        {
+          "param": 24,
+          "recall@10": 0.475,
+          "mean_dists": 886.9133333333333,
+          "p95_dists": 1156.9500000000003,
+          "p50_ms": 1.779187500005719
+        },
+        {
+          "param": 32,
+          "recall@10": 0.5336666666666666,
+          "mean_dists": 1089.41,
+          "p95_dists": 1357.2,
+          "p50_ms": 2.0057790000009845
+        },
+        {
+          "param": 48,
+          "recall@10": 0.6253333333333334,
+          "mean_dists": 1497.4966666666667,
+          "p95_dists": 1844.1,
+          "p50_ms": 3.138972500039472
+        },
+        {
+          "param": 64,
+          "recall@10": 0.6836666666666666,
+          "mean_dists": 1881.9233333333334,
+          "p95_dists": 2210.2,
+          "p50_ms": 3.7733464999973876
+        },
+        {
+          "param": 96,
+          "recall@10": 0.7696666666666668,
+          "mean_dists": 2658.68,
+          "p95_dists": 3016.05,
+          "p50_ms": 5.73229399998354
+        },
+        {
+          "param": 128,
+          "recall@10": 0.8326666666666667,
+          "mean_dists": 3397.96,
+          "p95_dists": 3775.15,
+          "p50_ms": 8.891539499984447
+        },
+        {
+          "param": 192,
+          "recall@10": 0.8943333333333334,
+          "mean_dists": 4849.996666666667,
+          "p95_dists": 5287.1,
+          "p50_ms": 9.689295500038497
+        },
+        {
+          "param": 256,
+          "recall@10": 0.931,
+          "mean_dists": 6255.0,
+          "p95_dists": 6772.8,
+          "p50_ms": 12.063697500025228
+        }
+      ],
+      "adaptive": [
+        {
+          "param": 1,
+          "recall@10": 0.18366666666666667,
+          "mean_dists": 280.75333333333333,
+          "p95_dists": 446.20000000000005,
+          "p50_ms": 0.8561074999988705
+        },
+        {
+          "param": 2,
+          "recall@10": 0.26666666666666666,
+          "mean_dists": 426.43666666666667,
+          "p95_dists": 663.5500000000002,
+          "p50_ms": 0.9214180000185479
+        },
+        {
+          "param": 3,
+          "recall@10": 0.33199999999999996,
+          "mean_dists": 548.9966666666667,
+          "p95_dists": 822.45,
+          "p50_ms": 1.1321850000172162
+        },
+        {
+          "param": 4,
+          "recall@10": 0.38099999999999995,
+          "mean_dists": 659.25,
+          "p95_dists": 1030.6000000000001,
+          "p50_ms": 1.5581304999727763
+        },
+        {
+          "param": 6,
+          "recall@10": 0.46,
+          "mean_dists": 856.8133333333334,
+          "p95_dists": 1409.15,
+          "p50_ms": 1.7901774999700137
+        },
+        {
+          "param": 8,
+          "recall@10": 0.5183333333333332,
+          "mean_dists": 1054.77,
+          "p95_dists": 1597.05,
+          "p50_ms": 2.5610315000221817
+        },
+        {
+          "param": 12,
+          "recall@10": 0.5910000000000001,
+          "mean_dists": 1377.4133333333334,
+          "p95_dists": 2140.3,
+          "p50_ms": 4.340094999975008
+        },
+        {
+          "param": 16,
+          "recall@10": 0.6536666666666667,
+          "mean_dists": 1710.1266666666668,
+          "p95_dists": 2764.9,
+          "p50_ms": 4.033860999925309
+        },
+        {
+          "param": 24,
+          "recall@10": 0.7293333333333334,
+          "mean_dists": 2269.52,
+          "p95_dists": 3595.9000000000005,
+          "p50_ms": 5.078870499971799
+        },
+        {
+          "param": 32,
+          "recall@10": 0.7816666666666666,
+          "mean_dists": 2791.3166666666666,
+          "p95_dists": 4375.950000000001,
+          "p50_ms": 6.091050999998515
+        }
+      ],
+      "dominance": [
+        {
+          "recall_target": 0.3073333333333333,
+          "fixed_ef": 10,
+          "fixed_dists": 480.20666666666665,
+          "adaptive_patience": 3,
+          "adaptive_dists": 548.9966666666667,
+          "adaptive_recall": 0.33199999999999996,
+          "work_saved_pct": -14.325082256250777
+        },
+        {
+          "recall_target": 0.39233333333333337,
+          "fixed_ef": 16,
+          "fixed_dists": 658.5366666666666,
+          "adaptive_patience": 6,
+          "adaptive_dists": 856.8133333333334,
+          "adaptive_recall": 0.46,
+          "work_saved_pct": -30.108675295225297
+        },
+        {
+          "recall_target": 0.475,
+          "fixed_ef": 24,
+          "fixed_dists": 886.9133333333333,
+          "adaptive_patience": 8,
+          "adaptive_dists": 1054.77,
+          "adaptive_recall": 0.5183333333333332,
+          "work_saved_pct": -18.92593789697603
+        },
+        {
+          "recall_target": 0.5336666666666666,
+          "fixed_ef": 32,
+          "fixed_dists": 1089.41,
+          "adaptive_patience": 12,
+          "adaptive_dists": 1377.4133333333334,
+          "adaptive_recall": 0.5910000000000001,
+          "work_saved_pct": -26.436633896635175
+        },
+        {
+          "recall_target": 0.6253333333333334,
+          "fixed_ef": 48,
+          "fixed_dists": 1497.4966666666667,
+          "adaptive_patience": 16,
+          "adaptive_dists": 1710.1266666666668,
+          "adaptive_recall": 0.6536666666666667,
+          "work_saved_pct": -14.199029936627582
+        },
+        {
+          "recall_target": 0.6836666666666666,
+          "fixed_ef": 64,
+          "fixed_dists": 1881.9233333333334,
+          "adaptive_patience": 24,
+          "adaptive_dists": 2269.52,
+          "adaptive_recall": 0.7293333333333334,
+          "work_saved_pct": -20.595773472883238
+        },
+        {
+          "recall_target": 0.7696666666666668,
+          "fixed_ef": 96,
+          "fixed_dists": 2658.68,
+          "adaptive_patience": 32,
+          "adaptive_dists": 2791.3166666666666,
+          "adaptive_recall": 0.7816666666666666,
+          "work_saved_pct": -4.9888165054337685
+        }
+      ]
+    }
+  }
+}

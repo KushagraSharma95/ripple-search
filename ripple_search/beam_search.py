@@ -70,7 +70,10 @@ class BeamSearch:
               max_expansions: int | None = None) -> list[int]:
         """mode='fixed': classic beam of width ef (ef >= k).
         mode='patience': unbounded beam; stop after `patience` consecutive
-        node expansions that do not improve the k-th best similarity."""
+        node expansions that do not improve the k-th best similarity.
+        mode='early_exit': classic beam of width ef PLUS stall-based early
+        exit — the beam bound caps quality loss on hard queries while easy
+        queries leave as soon as the top-k stops improving."""
         q = np.asarray(q, dtype=np.float32)
         qn = np.linalg.norm(q)
         if qn > 0:
@@ -86,7 +89,7 @@ class BeamSearch:
             dist_count += 1
             return float(self.X[i] @ q)
 
-        beam = ef if mode == "fixed" else max(k, 10 ** 9)  # patience: no width cap
+        beam = max(k, 10 ** 9) if mode == "patience" else ef
         for i in self._entries(q):
             if i in visited:
                 continue
@@ -107,7 +110,7 @@ class BeamSearch:
         while cand and expansions < limit:
             neg_s, u = heapq.heappop(cand)
             s_u = -neg_s
-            if mode == "fixed" and len(res) >= beam and s_u < res[0][0]:
+            if mode in ("fixed", "early_exit") and len(res) >= beam and s_u < res[0][0]:
                 break  # classic bound: best candidate worse than beam's worst
             if mode == "patience" and len(topk) >= k and s_u < topk[0] and stall >= patience:
                 break
@@ -119,22 +122,22 @@ class BeamSearch:
                     continue
                 visited.add(v)
                 s = eval_node(v)
-                if mode == "fixed":
+                if mode == "patience":
+                    heapq.heappush(cand, (-s, v))
+                    heapq.heappush(res, (s, v))
+                else:
                     if len(res) < beam or s > res[0][0]:
                         heapq.heappush(cand, (-s, v))
                         heapq.heappush(res, (s, v))
                         if len(res) > beam:
                             heapq.heappop(res)
-                else:
-                    heapq.heappush(cand, (-s, v))
-                    heapq.heappush(res, (s, v))
                 if len(topk) < k:
                     heapq.heappush(topk, s)
                     improved = True
                 elif s > topk[0]:
                     heapq.heapreplace(topk, s)
                     improved = True
-            if mode == "patience":
+            if mode in ("patience", "early_exit"):
                 stall = 0 if improved else stall + 1
                 if stall >= patience and len(topk) >= k:
                     break
