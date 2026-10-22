@@ -56,7 +56,13 @@ else:
             for q in Q:
                 needed.append(bf.query(q, k=K))
                 rip.query(q, k=K, learn=False)
-                neighborhoods.append(dict(rip.last_stats.activated_energy))
+                # Keep only the top-500 activation energies: the full ~10k-entry
+                # dicts per query exhaust RAM across 12k streams, and no policy
+                # here admits more than a few hundred prefetch candidates.
+                # Every policy sees the identical truncated streams.
+                act = rip.last_stats.activated_energy
+                top = sorted(act.items(), key=lambda kv: -kv[1])[:500]
+                neighborhoods.append(dict(top))
         streams[workload] = (needed, neighborhoods)
     _cache.write_bytes(pickle.dumps(streams))
 
