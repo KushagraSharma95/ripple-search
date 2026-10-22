@@ -1,6 +1,7 @@
 # Ripple Search POC — an honest test of the "thermodynamic ripple engine"
 
-An AI conversation produced an architecture for an "Emergent Ripple Engine":
+This project takes a speculative architecture — the "Emergent Ripple Engine" —
+and asks whether its claims survive measurement. The concept:
 documents as nodes at hypercube corners, queries as kinetic-energy ripples
 with decay, Hebbian path-strengthening, thermodynamic caching, and log-time
 consolidation — with claims that it beats traditional databases and that

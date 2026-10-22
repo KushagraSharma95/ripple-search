@@ -1,6 +1,6 @@
 # The Hypothesis Under Test
 
-Source: an AI-generated architectural concept for an "Emergent Ripple Engine" /
+Source: a speculative architectural concept for an "Emergent Ripple Engine" /
 "thermodynamic search database." To make it testable, the prose is pinned down
 into numbered, falsifiable claims. Each experiment in `experiments/` targets
 one claim; verdicts live in the top-level `README.md`.
