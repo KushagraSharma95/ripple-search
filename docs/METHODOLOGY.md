@@ -81,7 +81,7 @@ Algorithms*, Information Systems 2020):
 
 - Single machine, in-memory, 4 vCPU container; no disk-resident or
   distributed behavior is measured.
-- Corpus sizes up to 100k documents — small by enterprise standards, but the
+- Corpus sizes up to 200k documents (exp1c); vector corpora up to 100k — small by enterprise standards, but the
   *scaling shapes* (the claims under test) are visible well below that.
 - The ripple engine is a faithful but single implementation of prose; other
   parameterizations of "energy physics" exist. The calibration sweep explores
@@ -99,8 +99,8 @@ Algorithms*, Information Systems 2020):
   build times favor the ripple engine and are not comparable across engines.
   Query timing is single-threaded for all engines.
 - Wall-clock comparisons between this pure-Python engine and C/C++ engines
-  (hnswlib, FTS5, Oracle) carry interpreter overhead of roughly two orders
-  of magnitude per unit of work; algorithmic conclusions are therefore drawn
+  (hnswlib, FTS5, Oracle) carry interpreter overhead of roughly 300-400x per unit of work (measured:
+  ~4.6 us vs ~12 ns per distance computation); algorithmic conclusions are therefore drawn
   from work counters (nodes visited, distance computations), and wall-clock
   figures are labeled as prototype numbers.
 - Vector engines' latencies exclude query embedding; the per-query (single-

@@ -19,7 +19,8 @@ Two testable parts:
   (Note: this premise is itself suspect — B-trees, hash indexes and inverted
   indexes are sublinear by design. The experiment measures real engines.)
 
-Tested by: `exp1_scaling_n.py`, `exp5_real_text.py`.
+Tested by: `exp1_scaling_n.py`, `exp1b_recall_matched.py`,
+`exp1c_fts5_scaling.py`, `exp5_real_text.py`.
 
 ## C2 — Dimensionality sharpens pruning
 
