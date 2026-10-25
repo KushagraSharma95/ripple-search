@@ -286,9 +286,11 @@ corpus-dependent and has not been tested as a theory.
 
 ## Part 4 — calibrated adaptive termination (exp11–exp13)
 
-Three follow-up research questions. Each was run on two independent
-seeds under a protocol frozen before its results existed, with registered
-predictions, and was adversarially reviewed and corrected. Full write-up
+Three follow-up research questions. Each ran under a protocol frozen
+before its results existed, with registered predictions, and was
+adversarially reviewed and corrected. Each was run on two independent
+seeds, with one exception: in exp13, the re-standardized variant and the
+synthetic→Reuters direction rest on a single valid seed. Full write-up
 with every flag and caveat: `docs/RESEARCH.md`.
 
 - **Distribution-free recall guarantees (exp11).** Split-conformal
@@ -302,17 +304,22 @@ with every flag and caveat: `docs/RESEARCH.md`.
   promise.
 - **When adaptivity pays (exp12).** The registered prediction said the
   dividend rises with query-difficulty spread at every target and
-  vanishes at zero spread. Partly confirmed: on the clean seed it rises
-  strictly with spread at 0.90 and 0.95, from about 9% to **about 52% for
-  bimodal traffic**, half the work for the same contract. Partly refuted,
+  vanishes at zero spread. Partly confirmed: on the seed with no floored
+  cells it rises with spread at 0.90 and 0.95, from about 9% to **about
+  52% for a bimodal difficulty profile**, half the work for the same
+  contract. The 0.95 trend replicates on the second seed. (No production
+  traffic was measured; "bimodal" describes the synthetic workload.)
+  Partly refuted,
   on both seeds: +8–13% remains at zero injected spread, and at 0.99 the
   trend is not monotone. The proposed explanation, that *total realized*
   difficulty variance (including the corpus's own) drives the dividend,
   is a post-hoc hypothesis that has not been tested yet.
 - **Transfer (exp13).** This is a negative result, scoped to what was
   tested. Across six valid cells on two seeds, the best transferred
-  variant kept at most a quarter of the native controller's dividend and
-  fell below the plain fixed baseline in three. The first version's −232%
+  variant kept at most a quarter of the native controller's dividend. It
+  fell below the plain fixed baseline in three of those cells, or two if
+  one cell's target-missing baseline is replaced by a compliant one. The
+  first version's −232%
   was an artifact of a calibration-floor
   bug. The review found that bug, fixed it, and the fix was re-verified on
   a fresh seed; it also showed that six published exp10 savings were

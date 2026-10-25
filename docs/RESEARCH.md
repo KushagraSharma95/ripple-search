@@ -118,9 +118,14 @@ target.
   removes.
 
 **What holds:**
-- **Seed 701 (clean, nothing floored)** rises strictly with spread at both
+- **Seed 701 (no floored cells)** rises with spread at every step at both
   0.90 and 0.95, from about 9% at zero injected variance to about 52% at
-  bimodal. At these two targets, seed 701's baseline budgets were
+  bimodal. The point estimates increase strictly, but the narrow→medium
+  step at 0.95 is only +0.5 points, inside cell noise. The robust part is
+  the overall rise from const to bimodal. Seed 419's 0.95 row is also
+  monotone (7.8†, 17.6†, 21.7, 26.9, 33.1§), and its flags push the same
+  way: the † cells at the low end are inflated and the § cell at the top
+  is understated. So the 0.95 trend replicates across both seeds. At these two targets, seed 701's baseline budgets were
   identical across all five distributions (ef 179 and 310), so the bimodal
   dividend comes from the controller stopping easy queries early, not from
   a cheaper baseline. On seed 419 the bimodal baseline picked smaller
@@ -156,15 +161,20 @@ target.
   medium 15.8 → 6.8, narrow 12.2 → −0.9). A higher target does not by
   itself mean a larger dividend.
 
-**Practical reading.** Production traffic that mixes near-duplicate
-lookups with exploratory queries looks bimodal. That is where adaptive
-termination halves the work.
+**Practical reading (an extrapolation, not a measurement).** No
+production traffic was measured here. Traffic that mixes near-duplicate
+lookups with exploratory queries should look roughly bimodal. On the seed
+with no floored cells, the bimodal profile halved the work at 0.90 and
+0.95 (+51.5%, +51.9%) and saved +28.8% at 0.99. On seed 419 the same
+profile measured +21–36%, a range whose flags distort it in both
+directions.
 
 ## 3. Cross-corpus transfer of the controller (exp13): failed, scoped
 
 **Question.** Is per-corpus training necessary? Registered predictions:
 - v1: scale-free features transfer better.
-- v2 (a): fixing the calibration floor shrinks the transfer failure.
+- v2 (a): fixing the calibration floor shrinks the synthetic→Reuters
+  transfer failure.
 - v2 (b): re-standardizing features on unlabeled target data recovers
   part of the gap to native. This variant is deployable without target
   ground truth.
@@ -192,9 +202,14 @@ met it. A compliant baseline would cost more, so every dividend in that
 row is understated.
 
 **Valid seed-523 cells.** Only the synthetic→Reuters half of v1 was pinned
-at the floor. The Reuters→synthetic cells were not (tau 0.86–1.06, well
-inside the v1 range), so they stand as a second seed for that direction.
-The re-standardized variant did not exist in v1.
+at the floor. The Reuters→synthetic cells were not (tau 0.86–1.06), so
+they stand as a second seed for that direction. The closest to the floor
+is native at 0.90, tau 0.8598: about 10 bisection steps above the 0.85
+floor, so it is not pinned. Seed 617's wide-range search lands at a
+similar 0.8539 for the same cell, which corroborates the value. The
+re-standardized variant did not exist in v1. That leaves
+synthetic→Reuters, and everything about re-standardization, resting on
+seed 617 alone.
 
 | direction | target | native | transfer | scale-free |
 |---|---|---|---|---|
@@ -207,19 +222,32 @@ The re-standardized variant did not exist in v1.
 - **(a) confirmed.** The plain-transfer failure shrank from −140/−232% to
   −59/−65%. The comparison spans two seeds, so this is indicative rather
   than a controlled measurement.
-- **(b) refuted.** Re-standardization was the worst variant in 3 of 4
-  cells. In the fourth (synthetic→Reuters at 0.95) it beat plain transfer
-  by 4.1 points but stayed 113.7 points below native.
-- **Scale-free features: mixed, and seed-dependent.** On seed 617 they
-  give the only positive transferred dividend (+9.7%, synthetic→Reuters
-  0.90). On seed 523, plain transfer is the positive one (+2.0%, +3.3%)
-  and scale-free is strongly negative.
+- **(b) refuted, on a single seed.** The re-standardized variant exists
+  only in v2 (seed 617). It was the worst variant in 3 of 4 cells, by
+  28–87 points against plain transfer. In the fourth (synthetic→Reuters
+  at 0.95) it beat plain transfer by 4.1 points but stayed 113.7 points
+  below native. The margins are large enough that one seed settles the
+  direction of the result.
+- **Scale-free features: direction-dependent, and the dependence
+  replicates.**
+  - *Reuters→synthetic (two valid seeds):* scale-free loses to plain
+    transfer on both seeds (seed 523: −30.5/−23.2% against +2.0/+3.3%;
+    seed 617: −56.0/−35.4% against −4.4/−8.7%). The registered v1
+    prediction is refuted in this direction, with replication.
+  - *Synthetic→Reuters (seed 617 only):* scale-free beats plain transfer
+    (+9.7 vs −65.1%, −12.8 vs −58.7%). The floored seed-523 cells show the
+    same ordering, but they are not used as evidence of magnitude.
 - **Across both seeds, transfer kept little of the native dividend.** In
   all six valid cells, the best transferred variant kept at most a
-  quarter of the native controller's dividend, and in 3 of the 6 it fell
-  below the plain fixed baseline. The closest it came was seed 523,
-  Reuters→synthetic at 0.95: +3.3% against native +24.6%, a 21-point
-  gap.
+  quarter of the native controller's dividend (the maximum is 24.7%).
+  - *Below the fixed baseline:* in 3 of the 6 cells the best transferred
+    variant fell below the plain fixed baseline. One of those three,
+    synthetic→Reuters at 0.95 (scale-free −12.8%), compares against a
+    baseline that itself missed its target. Against the next, compliant
+    grid budget it is roughly break-even, so a compliant-baseline count
+    could be 2 of 6.
+  - *Closest approach:* seed 523, Reuters→synthetic at 0.95, +3.3%
+    against native +24.6%, a 21-point gap.
 
 **Conclusion, scoped to what was tested:** across these two corpora, with
 this ridge feature set and these three adaptation strategies, the
@@ -240,9 +268,10 @@ A calibrated, adaptively terminated search layer with three properties:
    where the default "pick the cheapest config that passed" approach
    failed 10/24. On a synthetic corpus the guarantee also cost less work.
 2. **A tested, partly refuted prediction about when adaptivity pays.**
-   On the clean seed the dividend rises strictly with injected difficulty
-   spread at 0.90 and 0.95. Bimodal difficulty, which is what mixed
-   production traffic looks like, halves the work there. Two parts of the
+   On the seed with no floored cells, the dividend rises with injected
+   difficulty spread at 0.90 and 0.95, and the 0.95 trend replicates on
+   the second seed. A bimodal difficulty profile halves the work there.
+   No real production traffic was measured. Two parts of the
    registered prediction failed: the dividend does not vanish at zero
    injected spread, and the trend does not hold at 0.99. The "total
    realized variance" explanation is a post-hoc hypothesis that has not
