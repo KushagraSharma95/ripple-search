@@ -49,6 +49,21 @@ class BeamSearch:
         self.codes = e.codes
         self.n = e.n
 
+    def load_graph(self, X: np.ndarray, neighbor_ids: np.ndarray) -> None:
+        # Externally built graph (e.g. hnswlib kNN lists at large scale):
+        # only the corner-hash entry structures are built here, O(N * d * b).
+        self.X = _normalize(X)
+        self.n = len(self.X)
+        self.neighbor_ids = np.asarray(neighbor_ids, dtype=np.int32)
+        d = self.X.shape[1]
+        self.H = self.rng.standard_normal((d, self.n_hyperplanes)).astype(np.float32)
+        proj = self.X @ self.H
+        weights = (1 << np.arange(self.n_hyperplanes, dtype=np.int64))
+        self.codes = ((proj > 0).astype(np.int64) * weights).sum(axis=1)
+        self.buckets = {}
+        for i, c in enumerate(self.codes):
+            self.buckets.setdefault(int(c), []).append(i)
+
     def _entries(self, q: np.ndarray) -> list[int]:
         proj = q @ self.H
         code = int(((proj > 0).astype(np.int64) *
@@ -144,3 +159,109 @@ class BeamSearch:
 
         self.last_dist_count = dist_count
         return [i for _, i in heapq.nlargest(k, res)]
+
+
+class InstrumentedBeamSearch(BeamSearch):
+    """Fixed-ef beam search with cheap checkpoints every `check_every`
+    expansions. A checkpoint computes a small feature vector of search
+    dynamics; a callback may record it (training collection) or decide to
+    stop (learned declared-recall termination). Feature extraction is O(k)
+    and deployment-grade predictors are linear, so the in-loop overhead is
+    ~a dot product per checkpoint; predictor evaluations are counted and
+    reported alongside distance computations."""
+
+    FEATURE_NAMES = [
+        "expansions", "visited", "stall", "imp_window",
+        "top_sim", "kth_sim", "kth_over_top", "cand_gap", "frac_budget",
+    ]
+
+    def search(self, q: np.ndarray, k: int = 10, ef: int = 512,
+               check_every: int = 8, on_checkpoint=None):
+        """Returns (top_ids, stats dict). on_checkpoint(features, snapshot_fn)
+        -> True to stop now; features is a float list in FEATURE_NAMES order
+        and snapshot_fn() lazily returns the current top-k ids (used by
+        training collection, ignored by deployed predictors)."""
+        q = np.asarray(q, dtype=np.float32)
+        qn = np.linalg.norm(q)
+        if qn > 0:
+            q = q / qn
+        dist_count = 0
+        checkpoints = 0
+
+        visited: set[int] = set()
+        cand: list[tuple[float, int]] = []
+        res: list[tuple[float, int]] = []
+
+        def eval_node(i: int) -> float:
+            nonlocal dist_count
+            dist_count += 1
+            return float(self.X[i] @ q)
+
+        for i in self._entries(q):
+            if i in visited:
+                continue
+            visited.add(i)
+            s = eval_node(i)
+            heapq.heappush(cand, (-s, i))
+            heapq.heappush(res, (s, i))
+            if len(res) > ef:
+                heapq.heappop(res)
+
+        topk: list[float] = sorted(s for s, _ in res)[-k:]
+        heapq.heapify(topk)
+
+        expansions = 0
+        stall = 0
+        imp_window = 0
+        stopped_early = False
+        while cand:
+            neg_s, u = heapq.heappop(cand)
+            s_u = -neg_s
+            if len(res) >= ef and s_u < res[0][0]:
+                break
+            expansions += 1
+            improved = False
+            for v in self.neighbor_ids[u]:
+                v = int(v)
+                if v in visited:
+                    continue
+                visited.add(v)
+                s = eval_node(v)
+                if len(res) < ef or s > res[0][0]:
+                    heapq.heappush(cand, (-s, v))
+                    heapq.heappush(res, (s, v))
+                    if len(res) > ef:
+                        heapq.heappop(res)
+                if len(topk) < k:
+                    heapq.heappush(topk, s)
+                    improved = True
+                elif s > topk[0]:
+                    heapq.heapreplace(topk, s)
+                    improved = True
+            if improved:
+                stall = 0
+                imp_window += 1
+            else:
+                stall += 1
+            if on_checkpoint is not None and expansions % check_every == 0 and len(topk) >= k:
+                checkpoints += 1
+                top_sim = max(topk)
+                kth_sim = topk[0]
+                cand_best = -cand[0][0] if cand else -1.0
+                feats = [
+                    float(expansions), float(len(visited)), float(stall),
+                    float(imp_window),
+                    top_sim, kth_sim,
+                    (1.0 + kth_sim) / (1.0 + top_sim) if top_sim > -1.0 else 0.0,
+                    cand_best - kth_sim,
+                    expansions / max(ef, 1),
+                ]
+                imp_window = 0
+                snap = lambda res=res: [i for _, i in heapq.nlargest(k, res)]
+                if on_checkpoint(feats, snap):
+                    stopped_early = True
+                    break
+
+        ids = [i for _, i in heapq.nlargest(k, res)]
+        return ids, {"dist_computations": dist_count, "expansions": expansions,
+                     "checkpoints": checkpoints, "stopped_early": stopped_early}
