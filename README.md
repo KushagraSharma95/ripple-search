@@ -307,7 +307,8 @@ with every flag and caveat: `docs/RESEARCH.md`.
   vanishes at zero spread. Partly confirmed: on the seed with no floored
   cells it rises with spread at 0.90 and 0.95, from about 9% to **about
   52% for a bimodal difficulty profile**, half the work for the same
-  contract. The 0.95 trend replicates on the second seed. (No production
+  contract. On the second seed the 0.95 trend repeats in direction, but
+  the halving magnitude is single-seed. (No production
   traffic was measured; "bimodal" describes the synthetic workload.)
   Partly refuted,
   on both seeds: +8–13% remains at zero injected spread, and at 0.99 the
@@ -317,8 +318,10 @@ with every flag and caveat: `docs/RESEARCH.md`.
 - **Transfer (exp13).** This is a negative result, scoped to what was
   tested. Across six valid cells on two seeds, the best transferred
   variant kept at most a quarter of the native controller's dividend. It
-  fell below the plain fixed baseline in three of those cells, or two if
-  one cell's target-missing baseline is replaced by a compliant one. The
+  fell below the plain fixed baseline in three of those cells. One of the
+  three was measured against a baseline that itself missed its target.
+  Against a compliant budget that cell is estimated, not measured, to be
+  roughly break-even. The
   first version's −232%
   was an artifact of a calibration-floor
   bug. The review found that bug, fixed it, and the fix was re-verified on

@@ -123,9 +123,14 @@ target.
   bimodal. The point estimates increase strictly, but the narrow→medium
   step at 0.95 is only +0.5 points, inside cell noise. The robust part is
   the overall rise from const to bimodal. Seed 419's 0.95 row is also
-  monotone (7.8†, 17.6†, 21.7, 26.9, 33.1§), and its flags push the same
-  way: the † cells at the low end are inflated and the § cell at the top
-  is understated. So the 0.95 trend replicates across both seeds. At these two targets, seed 701's baseline budgets were
+  monotone in its point estimates (7.8†, 17.6†, 21.7, 26.9, 33.1§). The
+  flags protect most of that ordering. The † cells are inflated and the §
+  cell is understated, so the steps from † to clean cells and from clean
+  cells to § are conservative. The const→narrow step compares two
+  inflated cells, though both controllers missed by the same 0.17 points,
+  so the inflation is probably similar. The 0.95 trend therefore
+  replicates on seed 419 in direction, but not in magnitude. On seed 701,
+  at 0.90 and 0.95, the baseline budgets were
   identical across all five distributions (ef 179 and 310), so the bimodal
   dividend comes from the controller stopping easy queries early, not from
   a cheaper baseline. On seed 419 the bimodal baseline picked smaller
@@ -204,8 +209,9 @@ row is understated.
 **Valid seed-523 cells.** Only the synthetic→Reuters half of v1 was pinned
 at the floor. The Reuters→synthetic cells were not (tau 0.86–1.06), so
 they stand as a second seed for that direction. The closest to the floor
-is native at 0.90, tau 0.8598: about 10 bisection steps above the 0.85
-floor, so it is not pinned. Seed 617's wide-range search lands at a
+is native at 0.90, tau 0.8598. That is 0.0088 above the lowest value the
+v1 search could return (0.8510, where the floored cells sit), so it is
+not pinned. Seed 617's wide-range search lands at a
 similar 0.8539 for the same cell, which corroborates the value. The
 re-standardized variant did not exist in v1. That leaves
 synthetic→Reuters, and everything about re-standardization, resting on
@@ -226,10 +232,15 @@ seed 617 alone.
   only in v2 (seed 617). It was the worst variant in 3 of 4 cells, by
   28–87 points against plain transfer. In the fourth (synthetic→Reuters
   at 0.95) it beat plain transfer by 4.1 points but stayed 113.7 points
-  below native. The margins are large enough that one seed settles the
-  direction of the result.
-- **Scale-free features: direction-dependent, and the dependence
-  replicates.**
+  below native. With one seed there is no variance estimate. For scale,
+  the same transferred variant in the same exp13 cell moved by up to 25.5
+  points between valid seeds. Only the 56- and 87-point margins clearly
+  exceed that. The 28-point margin is about the size of the observed
+  seed-to-seed swing, and the fourth cell points the other way. Treat (b)
+  as a single-seed result that needs replication.
+- **Scale-free features: direction-dependent.** The Reuters→synthetic
+  loss replicates across two seeds. The synthetic→Reuters win comes from
+  a single seed.
   - *Reuters→synthetic (two valid seeds):* scale-free loses to plain
     transfer on both seeds (seed 523: −30.5/−23.2% against +2.0/+3.3%;
     seed 617: −56.0/−35.4% against −4.4/−8.7%). The registered v1
@@ -239,7 +250,7 @@ seed 617 alone.
     same ordering, but they are not used as evidence of magnitude.
 - **Across both seeds, transfer kept little of the native dividend.** In
   all six valid cells, the best transferred variant kept at most a
-  quarter of the native controller's dividend (the maximum is 24.7%).
+  quarter of the native controller's dividend (the maximum is 24.6%).
   - *Below the fixed baseline:* in 3 of the 6 cells the best transferred
     variant fell below the plain fixed baseline. One of those three,
     synthetic→Reuters at 0.95 (scale-free −12.8%), compares against a
@@ -269,9 +280,12 @@ A calibrated, adaptively terminated search layer with three properties:
    failed 10/24. On a synthetic corpus the guarantee also cost less work.
 2. **A tested, partly refuted prediction about when adaptivity pays.**
    On the seed with no floored cells, the dividend rises with injected
-   difficulty spread at 0.90 and 0.95, and the 0.95 trend replicates on
-   the second seed. A bimodal difficulty profile halves the work there.
-   No real production traffic was measured. Two parts of the
+   difficulty spread at 0.90 and 0.95, and on that seed a bimodal
+   difficulty profile halves the work. The 0.95 trend replicates in
+   direction on the second seed, but the halving magnitude is single-seed:
+   seed 419's bimodal cells are floor-understated and can neither confirm
+   nor refute it. No real production traffic was measured. Two parts of
+   the
    registered prediction failed: the dividend does not vanish at zero
    injected spread, and the trend does not hold at 0.99. The "total
    realized variance" explanation is a post-hoc hypothesis that has not
