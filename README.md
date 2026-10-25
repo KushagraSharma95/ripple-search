@@ -238,6 +238,39 @@ HURT at short epochs, and the measured reason the drift specialists stay
 ahead (window demotions consume the prefetch pool — structural, not a
 tuning artifact). No free lunch, now with numbers.
 
+## Part 3 — the learned declared-recall controller (exp10)
+
+The FRONTIER.md front #1 attack: a ridge regressor (deployment cost: one
+dot product per checkpoint) predicts the search's current recall from
+dynamics features and stops when a DECLARED target is met. Full protocol
+and an unusual disclosure in the experiment docstring: the first three
+development rounds reused one test seed while the workload was retuned —
+an adversarial review (19 findings, 18 confirmed) caught it, those numbers
+were declared non-publication-grade, and the published results come from
+two fresh seeds (137, 211) evaluated exactly once each under a frozen
+protocol: baselines selected on val and tested once, identically to the
+controller, reported win or lose.
+
+Cross-seed-consistent results (contract = mean test recall >= target):
+
+| dataset | target | controller recall | work saved vs fixed budget |
+|---|---|---|---|
+| Reuters | 0.90 | 0.967–0.968 | 3–13% |
+| Reuters | 0.95 | 0.980–0.982 | 15–16% |
+| Reuters | 0.99 | 0.992–0.993 | **39–55%** |
+| synthetic | 0.90 | 0.901–0.908 | 20–23% (also beats tuned early-exit, both seeds) |
+| synthetic | 0.95 | 0.950–0.951 | 22–27% (early-exit cannot reach the bar) |
+
+Not claimed (seed-inconsistent or missed): synthetic@0.99 (one seed met,
+one missed by 0.3pt), most early-exit comparisons at Reuters, the GBM
+variant at 0.95. GloVe-100: every method, baselines included, misses the
+0.90 contract on test (flat-graph substrate ceiling ~0.89–0.92) — the
+controller is substrate-agnostic but contracts need a substrate that can
+reach them; a hierarchical graph is the orthogonal next step. The pattern
+worth noting: the controller's advantage GROWS with the declared target
+(3–13% at 0.90 → 39–55% at 0.99), exactly the regime public benchmarks
+stop measuring.
+
 ## Repo layout
 
 ```
