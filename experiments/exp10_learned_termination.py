@@ -113,6 +113,9 @@ def run_dataset(name):
 
     Q, qids = hetero_queries(bf.X, N_TRAIN + N_VAL + N_TEST, seed=31)
     truth = truth_excluding_self(bf, Q, qids)
+    # Every search retrieves K+1 and drops the query's source doc, matching
+    # the self-excluded ground truth; otherwise the source doc occupies one
+    # result slot and recall is structurally capped at (K-1)/K = 0.9.
     sl_train = slice(0, N_TRAIN)
     sl_val = slice(N_TRAIN, N_TRAIN + N_VAL)
     sl_test = slice(N_TRAIN + N_VAL, None)
@@ -121,17 +124,17 @@ def run_dataset(name):
     rows_X, rows_y = [], []
     t0 = time.time()
     with threadpool_limits(limits=1):
-        for q, t in zip(Q[sl_train], truth[sl_train]):
+        for q, t, sid in zip(Q[sl_train], truth[sl_train], qids[sl_train]):
             recs = []
 
-            def cb(feats, snap, t=t, recs=recs):
+            def cb(feats, snap, recs=recs):
                 recs.append((feats, snap()))
                 return False
 
-            bs.search(q, k=K, ef=ceiling, check_every=CHECK_EVERY, on_checkpoint=cb)
+            bs.search(q, k=K + 1, ef=ceiling, check_every=CHECK_EVERY, on_checkpoint=cb)
             for feats, ids in recs:
                 rows_X.append(expand(feats))
-                rows_y.append(recall_at_k(ids, t, K))
+                rows_y.append(recall_at_k([i for i in ids if i != sid][:K], t, K))
     Xf = np.vstack(rows_X)
     yf = np.asarray(rows_y)
     print(f" collected {len(yf)} checkpoints from {N_TRAIN} queries "
@@ -157,11 +160,11 @@ def run_dataset(name):
     def gbm_fn(fx):
         return float(gbm.predict(fx[None])[0])
 
-    def run_predictor(queries, truths, tau, min_checks=2, predict_fn=None):
+    def run_predictor(queries, truths, sids, tau, min_checks=2, predict_fn=None):
         predict_fn = predict_fn or ridge_fn
         recs, dists, nchecks, lat = [], [], [], []
         with threadpool_limits(limits=1):
-            for q, t in zip(queries, truths):
+            for q, t, sid in zip(queries, truths, sids):
                 state = {"n": 0}
 
                 def cb(feats, snap, state=state):
@@ -171,10 +174,10 @@ def run_dataset(name):
                     return predict_fn(expand(feats)) >= tau
 
                 t0 = time.perf_counter()
-                ids, st = bs.search(q, k=K, ef=ceiling,
+                ids, st = bs.search(q, k=K + 1, ef=ceiling,
                                     check_every=CHECK_EVERY, on_checkpoint=cb)
                 lat.append(time.perf_counter() - t0)
-                recs.append(recall_at_k(ids, t, K))
+                recs.append(recall_at_k([i for i in ids if i != sid][:K], t, K))
                 dists.append(st["dist_computations"])
                 nchecks.append(st["checkpoints"])
         return {"recall": float(np.mean(recs)),
@@ -186,9 +189,9 @@ def run_dataset(name):
     # ---- calibrate tau per target on VAL
     ceil_recs = []
     with threadpool_limits(limits=1):
-        for q, t in zip(Q[sl_val], truth[sl_val]):
-            r = bs.query(q, k=K, mode="fixed", ef=ceiling)
-            ceil_recs.append(recall_at_k(r, t, K))
+        for q, t, sid in zip(Q[sl_val], truth[sl_val], qids[sl_val]):
+            r = bs.query(q, k=K + 1, mode="fixed", ef=ceiling)
+            ceil_recs.append(recall_at_k([i for i in r if i != sid][:K], t, K))
     ceiling_recall = float(np.mean(ceil_recs))
     print(f" substrate ceiling recall (ef={ceiling}, val): {ceiling_recall:.4f}", flush=True)
 
@@ -205,14 +208,14 @@ def run_dataset(name):
             best = None
             for _ in range(8):  # bisection on achieved val recall
                 mid = (lo + hi) / 2
-                r = run_predictor(Q[sl_val], truth[sl_val], tau=mid, predict_fn=fn)
+                r = run_predictor(Q[sl_val], truth[sl_val], qids[sl_val], tau=mid, predict_fn=fn)
                 if r["recall"] >= T:
                     best = (mid, r)
                     hi = mid
                 else:
                     lo = mid
             if best is None:
-                best = (hi, run_predictor(Q[sl_val], truth[sl_val], tau=hi, predict_fn=fn))
+                best = (hi, run_predictor(Q[sl_val], truth[sl_val], qids[sl_val], tau=hi, predict_fn=fn))
             frozen[vname][T] = best[0]
             print(f" [{vname}] target {T}: tau={best[0]:.4f} val recall={best[1]['recall']:.4f} "
                   f"dists={best[1]['mean_dists']:.0f}", flush=True)
@@ -221,18 +224,18 @@ def run_dataset(name):
     def run_fixed(ef):
         recs, dists = [], []
         with threadpool_limits(limits=1):
-            for q, t in zip(Q[sl_test], truth[sl_test]):
-                r = bs.query(q, k=K, mode="fixed", ef=ef)
-                recs.append(recall_at_k(r, t, K))
+            for q, t, sid in zip(Q[sl_test], truth[sl_test], qids[sl_test]):
+                r = bs.query(q, k=K + 1, mode="fixed", ef=ef)
+                recs.append(recall_at_k([i for i in r if i != sid][:K], t, K))
                 dists.append(bs.last_dist_count)
         return float(np.mean(recs)), float(np.mean(dists))
 
     def run_early(ef, p):
         recs, dists = [], []
         with threadpool_limits(limits=1):
-            for q, t in zip(Q[sl_test], truth[sl_test]):
-                r = bs.query(q, k=K, mode="early_exit", ef=ef, patience=p)
-                recs.append(recall_at_k(r, t, K))
+            for q, t, sid in zip(Q[sl_test], truth[sl_test], qids[sl_test]):
+                r = bs.query(q, k=K + 1, mode="early_exit", ef=ef, patience=p)
+                recs.append(recall_at_k([i for i in r if i != sid][:K], t, K))
                 dists.append(bs.last_dist_count)
         return float(np.mean(recs)), float(np.mean(dists))
 
@@ -261,8 +264,8 @@ def run_dataset(name):
             continue
         row = {"target": T, "variants": {}}
         for vname, fn in variants.items():
-            pr = run_predictor(Q[sl_test], truth[sl_test], tau=frozen[vname][T],
-                               predict_fn=fn)
+            pr = run_predictor(Q[sl_test], truth[sl_test], qids[sl_test],
+                               tau=frozen[vname][T], predict_fn=fn)
             fx = [r for r in fixed_rows if r["recall"] >= min(T, pr["recall"])]
             fx_best = min(fx, key=lambda r: r["mean_dists"]) if fx else None
             ee = [r for r in early_rows if r["recall"] >= min(T, pr["recall"])]
