@@ -1,0 +1,227 @@
+{
+  "description": "Experiment 12 \u2014 when does per-query adaptivity pay? A controlled test of\nthe difficulty-variance hypothesis.\n\nexp10 measured the adaptive controller's dividend growing with the declared\ntarget (3-13% at 0.90 -> 39-55% at 0.99 on Reuters) and vanishing on a\nhomogeneous synthetic workload. Hypothesis: the dividend is driven by\nQUERY-DIFFICULTY VARIANCE \u2014 a fixed budget must be sized for the hardest\nqueries, so the harvestable waste is the easy-query mass; with zero\nvariance there is nothing to harvest at any target.\n\nDesign: one corpus (synthetic, N=100k, D=64 \u2014 fixed substrate), five query\ndifficulty distributions with (approximately) MATCHED MEAN eps and\nincreasing spread:\n\n    const    : eps = 0.080 for every query          (zero variance)\n    narrow   : eps ~ U[0.06, 0.10]\n    medium   : eps ~ U[0.03, 0.13]\n    wide     : eps ~ U[0.01, 0.15]\n    bimodal  : eps in {0.02, 0.14}, 50/50           (max spread at this mean)\n\nFor each distribution: train/val/test = 600/300/300 (fresh seed 419, never\nused), ridge controller as in exp10, tau calibrated on val per target\nT in {0.90, 0.95, 0.99}, fixed-ef baseline selected on val on the x1.2\ngrid, both evaluated once on test. The measured quantity is the DIVIDEND:\n1 - (controller mean dists / fixed-baseline mean dists), per (distribution,\ntarget) cell, with contract-met flags. Prediction registered up front:\ndividend increases with spread at every target, and is ~0 (or negative)\nfor const at all targets. Published win or lose.\n\nv2 amendment (after adversarial review, before the v2 run): the v1 tau\nbisection was bounded to [T-0.05, 1.10] and pinned the bimodal 0.90/0.95\ncells at that floor (controller overshot its target; those v1 dividends are\nunderstated lower bounds). v2 searches [-0.5, 1.5] in 14 steps, records a\nfloor flag, and runs on a fresh second seed (701) via QSEED so every cell\nhas two independent measurements.\n",
+  "k": 10,
+  "query_seed": 701,
+  "targets": [
+    0.9,
+    0.95,
+    0.99
+  ],
+  "distributions": {
+    "const": {
+      "eps_mean": 0.07999999076128006,
+      "eps_std": 7.450580596923828e-09,
+      "ceiling_recall_val": 0.9913333333333333,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.876220703125,
+          "tau_floored": false,
+          "fixed_ef": 179,
+          "pred_recall": 0.8960000000000002,
+          "pred_dists": 4250.116666666667,
+          "fixed_recall": 0.8983333333333335,
+          "fixed_dists": 4685.19,
+          "contract_met": false,
+          "dividend": 0.09286140654559005
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9381103515625,
+          "tau_floored": false,
+          "fixed_ef": 310,
+          "pred_recall": 0.9496666666666668,
+          "pred_dists": 6913.196666666667,
+          "fixed_recall": 0.9486666666666668,
+          "fixed_dists": 7590.266666666666,
+          "contract_met": false,
+          "dividend": 0.08920239956435427
+        },
+        {
+          "target": 0.99,
+          "tau": 1.026123046875,
+          "tau_floored": false,
+          "fixed_ef": 768,
+          "pred_recall": 0.9906666666666668,
+          "pred_dists": 14730.556666666667,
+          "fixed_recall": 0.9933333333333333,
+          "fixed_dists": 16282.856666666667,
+          "contract_met": true,
+          "dividend": 0.0953333946111421
+        }
+      ]
+    },
+    "narrow": {
+      "eps_mean": 0.08013146370649338,
+      "eps_std": 0.011261905543506145,
+      "ceiling_recall_val": 0.9933333333333333,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8707275390625,
+          "tau_floored": false,
+          "fixed_ef": 179,
+          "pred_recall": 0.9003333333333334,
+          "pred_dists": 4127.883333333333,
+          "fixed_recall": 0.911,
+          "fixed_dists": 4702.47,
+          "contract_met": true,
+          "dividend": 0.12218826843481556
+        },
+        {
+          "target": 0.95,
+          "tau": 0.936279296875,
+          "tau_floored": false,
+          "fixed_ef": 310,
+          "pred_recall": 0.9560000000000001,
+          "pred_dists": 6832.933333333333,
+          "fixed_recall": 0.9596666666666666,
+          "fixed_dists": 7626.973333333333,
+          "contract_met": true,
+          "dividend": 0.10410945014448714
+        },
+        {
+          "target": 0.99,
+          "tau": 1.0174560546875,
+          "tau_floored": false,
+          "fixed_ef": 642,
+          "pred_recall": 0.9896666666666666,
+          "pred_dists": 14265.623333333333,
+          "fixed_recall": 0.9873333333333333,
+          "fixed_dists": 14142.786666666667,
+          "contract_met": false,
+          "dividend": -0.008685464156521716
+        }
+      ]
+    },
+    "medium": {
+      "eps_mean": 0.08032865822315216,
+      "eps_std": 0.02815476432442665,
+      "ceiling_recall_val": 0.9933333333333333,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8697509765625,
+          "tau_floored": false,
+          "fixed_ef": 179,
+          "pred_recall": 0.9086666666666667,
+          "pred_dists": 3956.3166666666666,
+          "fixed_recall": 0.9153333333333334,
+          "fixed_dists": 4700.886666666666,
+          "contract_met": true,
+          "dividend": 0.1583892684075202
+        },
+        {
+          "target": 0.95,
+          "tau": 0.937255859375,
+          "tau_floored": false,
+          "fixed_ef": 310,
+          "pred_recall": 0.955,
+          "pred_dists": 6788.48,
+          "fixed_recall": 0.9576666666666666,
+          "fixed_dists": 7618.24,
+          "contract_met": true,
+          "dividend": 0.10891754525979758
+        },
+        {
+          "target": 0.99,
+          "tau": 1.015380859375,
+          "tau_floored": false,
+          "fixed_ef": 642,
+          "pred_recall": 0.9876666666666667,
+          "pred_dists": 13171.613333333333,
+          "fixed_recall": 0.9870000000000001,
+          "fixed_dists": 14134.803333333333,
+          "contract_met": false,
+          "dividend": 0.06814314831877155
+        }
+      ]
+    },
+    "wide": {
+      "eps_mean": 0.08046012371778488,
+      "eps_std": 0.03941667079925537,
+      "ceiling_recall_val": 0.9946666666666666,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8641357421875,
+          "tau_floored": false,
+          "fixed_ef": 179,
+          "pred_recall": 0.9103333333333334,
+          "pred_dists": 3669.016666666667,
+          "fixed_recall": 0.9159999999999998,
+          "fixed_dists": 4700.543333333333,
+          "contract_met": true,
+          "dividend": 0.21944839000881444
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9259033203125,
+          "tau_floored": false,
+          "fixed_ef": 310,
+          "pred_recall": 0.9520000000000001,
+          "pred_dists": 5944.27,
+          "fixed_recall": 0.9609999999999999,
+          "fixed_dists": 7614.826666666667,
+          "contract_met": true,
+          "dividend": 0.21938210018350157
+        },
+        {
+          "target": 0.99,
+          "tau": 1.008056640625,
+          "tau_floored": false,
+          "fixed_ef": 642,
+          "pred_recall": 0.9863333333333334,
+          "pred_dists": 12088.52,
+          "fixed_recall": 0.9883333333333333,
+          "fixed_dists": 14125.84,
+          "contract_met": false,
+          "dividend": 0.1442264672401783
+        }
+      ]
+    },
+    "bimodal": {
+      "eps_mean": 0.07900000363588333,
+      "eps_std": 0.05999166518449783,
+      "ceiling_recall_val": 0.9956666666666666,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8045654296875,
+          "tau_floored": false,
+          "fixed_ef": 179,
+          "pred_recall": 0.912,
+          "pred_dists": 2266.2833333333333,
+          "fixed_recall": 0.9240000000000002,
+          "fixed_dists": 4669.84,
+          "contract_met": true,
+          "dividend": 0.5146978625962917
+        },
+        {
+          "target": 0.95,
+          "tau": 0.8858642578125,
+          "tau_floored": false,
+          "fixed_ef": 310,
+          "pred_recall": 0.9556666666666668,
+          "pred_dists": 3641.86,
+          "fixed_recall": 0.9663333333333333,
+          "fixed_dists": 7573.843333333333,
+          "contract_met": true,
+          "dividend": 0.5191529795748789
+        },
+        {
+          "target": 0.99,
+          "tau": 1.0072021484375,
+          "tau_floored": false,
+          "fixed_ef": 642,
+          "pred_recall": 0.9913333333333333,
+          "pred_dists": 10008.126666666667,
+          "fixed_recall": 0.9929999999999999,
+          "fixed_dists": 14063.23,
+          "contract_met": true,
+          "dividend": 0.28834793524199864
+        }
+      ]
+    }
+  }
+}

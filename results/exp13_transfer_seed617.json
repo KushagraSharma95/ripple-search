@@ -1,0 +1,170 @@
+{
+  "description": "Experiment 13 \u2014 does the learned controller transfer across corpora?\n\nexp10/11/12 train a recall predictor per corpus. If search-dynamics\nfeatures generalize, the expensive part (labeled checkpoint collection)\nneed not be repeated per deployment \u2014 only the cheap tau calibration on\nlocal validation queries. Design:\n\n  - corpora: synthetic (100k, d=64) and Reuters LSA (10.8k, d=256) \u2014 very\n    different scale and dimensionality, same feature extractor\n  - directions: synthetic->reuters and reuters->synthetic\n  - the transferred predictor is trained on the SOURCE train split; tau is\n    always calibrated on the TARGET val split (realistic deployment);\n    evaluation once on the TARGET test split\n  - feature ablation: full 15 features vs the scale-free subset (ratios,\n    similarities, budget fractions \u2014 no raw node counts), registered\n    prediction: scale-free transfers better\n  - reference: the natively trained controller (target train split)\n  - shared baseline: cheapest val-selected fixed ef; the reported quantity\n    per (direction, target, feature set) is the dividend vs that baseline\n    and the transfer cost = native dividend - transferred dividend\n\nFresh query seed 523; targets 0.90 and 0.95; published win or lose.\n\nv2 amendment (after adversarial review, registered before the v2 runs):\nthe v1 tau bisection was bounded to [T-0.05, 1.10]; every synthetic->reuters\ncell \u2014 native included \u2014 was pinned at that floor, so local calibration\ncould never trade the transferred models' recall overshoot for work, and\nthe v1 transfer magnitudes were partly a protocol artifact. v2 widens the\nsearch to [-0.5, 1.5] with 14 bisection steps, records a floor-hit flag per\ncell, and adds `transfer_restd`: the source-trained ridge with feature\nstandardization re-fitted on UNLABELED target train-split features (no\ntarget ground truth used \u2014 deployable). Fresh seed 617 via QSEED.\nRegistered predictions: (a) widened calibration shrinks the\nsynthetic->reuters failure; (b) re-standardization recovers part of the\ngap to native.\n",
+  "query_seed": 617,
+  "directions": {
+    "synthetic->reuters": [
+      {
+        "target": 0.9,
+        "fixed_ef": 60,
+        "fixed_recall": 0.916,
+        "fixed_dists": 584.4366666666666,
+        "models": {
+          "native_full": {
+            "tau": 0.659423828125,
+            "tau_floored": false,
+            "recall": 0.9036666666666667,
+            "dists": 355.3566666666667,
+            "contract_met": true,
+            "dividend": 0.39196719347976106
+          },
+          "transfer_full": {
+            "tau": 0.122802734375,
+            "tau_floored": false,
+            "recall": 0.9256666666666669,
+            "dists": 964.84,
+            "contract_met": true,
+            "dividend": -0.650888890156333
+          },
+          "transfer_scalefree": {
+            "tau": 0.224609375,
+            "tau_floored": false,
+            "recall": 0.9233333333333333,
+            "dists": 527.99,
+            "contract_met": true,
+            "dividend": 0.09658303437498206
+          },
+          "transfer_restd": {
+            "tau": 0.8321533203125,
+            "tau_floored": false,
+            "recall": 0.9253333333333335,
+            "dists": 1128.3133333333333,
+            "contract_met": true,
+            "dividend": -0.9305998368799586
+          }
+        }
+      },
+      {
+        "target": 0.95,
+        "fixed_ef": 149,
+        "fixed_recall": 0.9476666666666667,
+        "fixed_dists": 1110.1966666666667,
+        "models": {
+          "native_full": {
+            "tau": 0.775390625,
+            "tau_floored": false,
+            "recall": 0.9566666666666669,
+            "dists": 454.27,
+            "contract_met": true,
+            "dividend": 0.5908202450616857
+          },
+          "transfer_full": {
+            "tau": 0.3699951171875,
+            "tau_floored": false,
+            "recall": 0.9686666666666666,
+            "dists": 1762.1233333333332,
+            "contract_met": true,
+            "dividend": -0.5872172798212927
+          },
+          "transfer_scalefree": {
+            "tau": 0.434814453125,
+            "tau_floored": false,
+            "recall": 0.965,
+            "dists": 1252.2433333333333,
+            "contract_met": true,
+            "dividend": -0.12794730062841708
+          },
+          "transfer_restd": {
+            "tau": 0.9288330078125,
+            "tau_floored": false,
+            "recall": 0.9646666666666668,
+            "dists": 1716.8566666666666,
+            "contract_met": true,
+            "dividend": -0.5464437231841803
+          }
+        }
+      }
+    ],
+    "reuters->synthetic": [
+      {
+        "target": 0.9,
+        "fixed_ef": 179,
+        "fixed_recall": 0.9200000000000002,
+        "fixed_dists": 4676.583333333333,
+        "models": {
+          "native_full": {
+            "tau": 0.8538818359375,
+            "tau_floored": false,
+            "recall": 0.8993333333333333,
+            "dists": 3309.036666666667,
+            "contract_met": false,
+            "dividend": 0.2924243126213938
+          },
+          "transfer_full": {
+            "tau": 0.9725341796875,
+            "tau_floored": false,
+            "recall": 0.9089999999999999,
+            "dists": 4881.693333333334,
+            "contract_met": true,
+            "dividend": -0.04385894260410916
+          },
+          "transfer_scalefree": {
+            "tau": 0.9395751953125,
+            "tau_floored": false,
+            "recall": 0.9109999999999998,
+            "dists": 7294.756666666667,
+            "contract_met": true,
+            "dividend": -0.5598474669897897
+          },
+          "transfer_restd": {
+            "tau": 1.036865234375,
+            "tau_floored": false,
+            "recall": 0.9163333333333332,
+            "dists": 8972.12,
+            "contract_met": true,
+            "dividend": -0.9185202872467437
+          }
+        }
+      },
+      {
+        "target": 0.95,
+        "fixed_ef": 310,
+        "fixed_recall": 0.9620000000000001,
+        "fixed_dists": 7581.18,
+        "models": {
+          "native_full": {
+            "tau": 0.926025390625,
+            "tau_floored": false,
+            "recall": 0.9563333333333333,
+            "dists": 5740.596666666666,
+            "contract_met": true,
+            "dividend": 0.2427832254785316
+          },
+          "transfer_full": {
+            "tau": 1.0347900390625,
+            "tau_floored": false,
+            "recall": 0.9540000000000002,
+            "dists": 8241.223333333333,
+            "contract_met": true,
+            "dividend": -0.08706340349831199
+          },
+          "transfer_scalefree": {
+            "tau": 0.9639892578125,
+            "tau_floored": false,
+            "recall": 0.9580000000000001,
+            "dists": 10265.69,
+            "contract_met": true,
+            "dividend": -0.3541018680469268
+          },
+          "transfer_restd": {
+            "tau": 1.40380859375,
+            "tau_floored": false,
+            "recall": 0.9613333333333335,
+            "dists": 12481.956666666667,
+            "contract_met": true,
+            "dividend": -0.646439824231408
+          }
+        }
+      }
+    ]
+  }
+}

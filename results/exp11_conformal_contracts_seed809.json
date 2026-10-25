@@ -1,0 +1,244 @@
+{
+  "description": "Experiment 11 \u2014 conformal declared-recall contracts (distribution-free).\n\nexp10's controller targets MEAN recall and calibrates its stop threshold by\nbisection \u2014 empirical, no guarantee, and we measured the 0.99 contract\nslipping on some seeds. This experiment replaces bisection with split\nconformal calibration and upgrades the contract to PER-QUERY form:\n\n    \"at least m of the true top-10 are returned, for at least a 1-delta\n     fraction of queries\" \u2014 distribution-free, by exchangeability.\n\nMechanism. During beam search the running top-k only improves, so per-query\nrecall at the stop point is monotone (non-decreasing) in the stop threshold\ntau. For each calibration query, one instrumented ceiling run records the\npredictor value p_t and the running hit count m_t at every checkpoint; the\nquery's critical value c_i is the smallest candidate tau (over observed p_t\nvalues) whose induced stop point satisfies m >= m_target, or +inf if even\nthe ceiling run never does. tau_hat = the ceil((n+1)(1-delta))-th smallest\nc_i. Choosing tau >= c_i makes query i meet the contract, so a fresh\nexchangeable query meets it with probability >= 1-delta (standard split\nconformal argument). If more than a delta fraction of calibration queries\nare infeasible at the ceiling, tau_hat = +inf and the contract is reported\nunattainable at that coverage, honestly.\n\nProtocol (frozen before running; published win or lose):\n  - fresh query seed 311, never used in any prior run or development round\n  - datasets: reuters_lsa256, synthetic_hetero (GloVe's flat-graph substrate\n    cannot reach contract grade and is deferred to the substrate step)\n  - splits: 600 train (predictor fit, identical to exp10's features/model),\n    300 calibration, 300 test; eps ~ U[0.01, 0.15]; source doc excluded\n    from truth and results symmetrically\n  - contracts: m_target in {8, 9, 10} of k=10, coverage 1-delta in {0.9, 0.8}\n  - measured on test: empirical coverage (must be >= 1-delta up to binomial\n    noise, else the method FAILS), mean recall, mean/p95 distance\n    computations\n  - baselines on identical test queries: (a) the cheapest fixed ef whose\n    CALIBRATION coverage >= 1-delta, evaluated once on test; (b) exp10's\n    mean-recall bisection controller is reported for context, not as a\n    coverage competitor (it guarantees nothing per-query)\n",
+  "k": 10,
+  "query_seed": 809,
+  "split": [
+    600,
+    300,
+    300
+  ],
+  "datasets": {
+    "reuters_lsa256": [
+      {
+        "m_target": 8,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0033333333333333335,
+        "tau_hat": 0.896760990794121,
+        "test_coverage": 0.9766666666666667,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9743333333333334,
+        "mean_dists": 774.7866666666666,
+        "p95_dists": 2349.900000000001,
+        "fixed_coverage_matched": {
+          "ef": 60,
+          "coverage": 0.8666666666666667,
+          "mean_dists": 596.7266666666667
+        },
+        "beats_fixed": false
+      },
+      {
+        "m_target": 8,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0033333333333333335,
+        "tau_hat": 0.8390654173381336,
+        "test_coverage": 0.95,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9560000000000001,
+        "mean_dists": 549.8566666666667,
+        "p95_dists": 1916.2500000000002,
+        "fixed_coverage_matched": {
+          "ef": 35,
+          "coverage": 0.81,
+          "mean_dists": 421.31666666666666
+        },
+        "beats_fixed": false
+      },
+      {
+        "m_target": 9,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0033333333333333335,
+        "tau_hat": 0.9062161373393245,
+        "test_coverage": 0.9566666666666667,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.976,
+        "mean_dists": 829.3566666666667,
+        "p95_dists": 2503.750000000001,
+        "fixed_coverage_matched": {
+          "ef": 72,
+          "coverage": 0.8633333333333333,
+          "mean_dists": 672.3133333333334
+        },
+        "beats_fixed": false
+      },
+      {
+        "m_target": 9,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0033333333333333335,
+        "tau_hat": 0.8484206839285822,
+        "test_coverage": 0.91,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9566666666666667,
+        "mean_dists": 574.6233333333333,
+        "p95_dists": 1941.1500000000003,
+        "fixed_coverage_matched": {
+          "ef": 35,
+          "coverage": 0.7633333333333333,
+          "mean_dists": 421.31666666666666
+        },
+        "beats_fixed": false
+      },
+      {
+        "m_target": 10,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.03,
+        "tau_hat": 0.9578444800289816,
+        "test_coverage": 0.9133333333333333,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9846666666666666,
+        "mean_dists": 1389.9133333333334,
+        "p95_dists": 4436.450000000001,
+        "fixed_coverage_matched": {
+          "ef": 179,
+          "coverage": 0.9,
+          "mean_dists": 1284.38
+        },
+        "beats_fixed": false
+      },
+      {
+        "m_target": 10,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.03,
+        "tau_hat": 0.9091393535368724,
+        "test_coverage": 0.8766666666666667,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9763333333333334,
+        "mean_dists": 844.0733333333334,
+        "p95_dists": 2536.0500000000006,
+        "fixed_coverage_matched": {
+          "ef": 60,
+          "coverage": 0.77,
+          "mean_dists": 596.7266666666667
+        },
+        "beats_fixed": false
+      }
+    ],
+    "synthetic_hetero": [
+      {
+        "m_target": 8,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8576639449937273,
+        "test_coverage": 0.9633333333333334,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9119999999999999,
+        "mean_dists": 3569.7066666666665,
+        "p95_dists": 7420.750000000001,
+        "fixed_coverage_matched": {
+          "ef": 179,
+          "coverage": 0.93,
+          "mean_dists": 4673.846666666666
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 8,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8239223778388665,
+        "test_coverage": 0.9033333333333333,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.8796666666666667,
+        "mean_dists": 2767.4366666666665,
+        "p95_dists": 6076.200000000001,
+        "fixed_coverage_matched": {
+          "ef": 124,
+          "coverage": 0.8566666666666667,
+          "mean_dists": 3390.36
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 9,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.9132959563100416,
+        "test_coverage": 0.9166666666666666,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9550000000000001,
+        "mean_dists": 5486.746666666667,
+        "p95_dists": 10356.400000000003,
+        "fixed_coverage_matched": {
+          "ef": 258,
+          "coverage": 0.9033333333333333,
+          "mean_dists": 6460.586666666667
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 9,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8763339676380077,
+        "test_coverage": 0.82,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.925,
+        "mean_dists": 4116.75,
+        "p95_dists": 8185.050000000004,
+        "fixed_coverage_matched": {
+          "ef": 179,
+          "coverage": 0.76,
+          "mean_dists": 4673.846666666666
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 10,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.06333333333333334,
+        "tau_hat": 1.0205446008364287,
+        "test_coverage": 0.9566666666666667,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9956666666666667,
+        "mean_dists": 13144.096666666666,
+        "p95_dists": 17109.05,
+        "fixed_coverage_matched": {
+          "ef": 642,
+          "coverage": 0.9466666666666667,
+          "mean_dists": 14078.276666666667
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 10,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.06333333333333334,
+        "tau_hat": 0.9741162686230069,
+        "test_coverage": 0.8766666666666667,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.986,
+        "mean_dists": 9193.716666666667,
+        "p95_dists": 16579.1,
+        "fixed_coverage_matched": {
+          "ef": 446,
+          "coverage": 0.8466666666666667,
+          "mean_dists": 10375.803333333333
+        },
+        "beats_fixed": true
+      }
+    ]
+  }
+}

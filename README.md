@@ -278,6 +278,38 @@ worth noting: the controller's advantage GROWS with the declared target
 (3–13% at 0.90 → 39–55% at 0.99), exactly the regime public benchmarks
 stop measuring.
 
+## Part 4 — calibrated adaptive termination (exp11–exp13)
+
+Three follow-up research questions. Each was run on two independent
+seeds under a protocol frozen before its results existed, with registered
+predictions, and was adversarially reviewed and corrected. Full write-up
+with every flag and caveat: `docs/RESEARCH.md`.
+
+- **Distribution-free recall guarantees (exp11).** Split-conformal
+  calibration of the stop threshold gives per-query contracts of the form
+  "≥ m of the true top-10 for ≥ 1−δ of queries." The promise held in
+  **24 of 24 cells across two seeds**. The usual alternative, picking the
+  cheapest config that passed on calibration, broke its promise in
+  **10 of 24**. On the synthetic corpus the guaranteed controller was also
+  cheaper, with 6.6–24.9% less work. On Reuters the guarantee cost
+  1.1–1.9× the work of a baseline that mostly fails to keep its own
+  promise.
+- **When adaptivity pays (exp12).** The registered theory said the
+  dividend scales with query-difficulty variance. On the clean seed, the
+  dividend rises strictly with difficulty spread at 0.90 and 0.95, from
+  about 9% to **about 52% for bimodal traffic**: half the work for the
+  same contract. The registered "zero at zero variance" prediction is
+  refuted on both seeds (+8–13% remains), which led to an amended theory:
+  *total realized* difficulty variance, including the corpus's intrinsic
+  variance, drives the dividend.
+- **Transfer (exp13).** This is a negative result, scoped to what was
+  tested: none of three adaptation strategies let a controller trained on
+  one corpus work on another, and the best came within 29 points of
+  native. The first version's −232% was an artifact of a calibration-floor
+  bug. The review found that bug, fixed it, and the fix was re-verified on
+  a fresh seed; it also showed that six published exp10 savings were
+  understated.
+
 ## Repo layout
 
 ```
