@@ -20,6 +20,19 @@ local validation queries. Design:
     and the transfer cost = native dividend - transferred dividend
 
 Fresh query seed 523; targets 0.90 and 0.95; published win or lose.
+
+v2 amendment (after adversarial review, registered before the v2 runs):
+the v1 tau bisection was bounded to [T-0.05, 1.10]; every synthetic->reuters
+cell — native included — was pinned at that floor, so local calibration
+could never trade the transferred models' recall overshoot for work, and
+the v1 transfer magnitudes were partly a protocol artifact. v2 widens the
+search to [-0.5, 1.5] with 14 bisection steps, records a floor-hit flag per
+cell, and adds `transfer_restd`: the source-trained ridge with feature
+standardization re-fitted on UNLABELED target train-split features (no
+target ground truth used — deployable). Fresh seed 617 via QSEED.
+Registered predictions: (a) widened calibration shrinks the
+synthetic->reuters failure; (b) re-standardization recovers part of the
+gap to native.
 """
 
 import numpy as np
@@ -33,7 +46,8 @@ K = 10
 TARGETS = [0.90, 0.95]
 CHECK_EVERY = 8
 N_TRAIN, N_VAL, N_TEST = 600, 300, 300
-QSEED = 523
+import os
+QSEED = int(os.environ.get("QSEED", "523"))
 CEILING = 768
 SCALE_FREE = [3, 4, 5, 6, 7, 8, 11, 12, 13, 14]
 
@@ -103,13 +117,19 @@ def collect(ds):
     return np.vstack(rows_X), np.asarray(rows_y)
 
 
-def fit(Xf, yf, cols=None):
+def fit(Xf, yf, cols=None, restd_X=None):
+    """Ridge on standardized features, folded into (w, b). With restd_X,
+    the learned coefficients are re-expressed against the mean/scale of
+    restd_X (unlabeled target features) instead of the source's."""
     from sklearn.linear_model import Ridge
     from sklearn.preprocessing import StandardScaler
 
     Xs = Xf[:, cols] if cols is not None else Xf
     scaler = StandardScaler().fit(Xs)
     ridge = Ridge(alpha=1.0).fit(scaler.transform(Xs), yf)
+    if restd_X is not None:
+        Xt = restd_X[:, cols] if cols is not None else restd_X
+        scaler = StandardScaler().fit(Xt)
     w = (ridge.coef_ / scaler.scale_).astype(np.float64)
     b = float(ridge.intercept_ - np.dot(ridge.coef_, scaler.mean_ / scaler.scale_))
     return w, b, cols
@@ -145,11 +165,16 @@ def run_fixed(ds, sl, ef):
     return float(np.mean(recs)), float(np.mean(dists))
 
 
+LO, HI, STEPS = -0.5, 1.5, 14
+
+
 def calibrate(ds, model, T):
+    """Smallest tau (to bisection resolution) whose VAL mean recall >= T.
+    Returns (tau, floored) — floored flags a tau pinned at the search floor."""
     sl = slice(N_TRAIN, N_TRAIN + N_VAL)
-    lo, hi = T - 0.05, 1.10
+    lo, hi = LO, HI
     best = None
-    for _ in range(8):
+    for _ in range(STEPS):
         mid = (lo + hi) / 2
         rec, _ = run_pred(ds, sl, model, mid)
         if rec >= T:
@@ -157,7 +182,8 @@ def calibrate(ds, model, T):
             hi = mid
         else:
             lo = mid
-    return best if best is not None else hi
+    tau = best if best is not None else HI
+    return tau, bool(tau - LO < 2 * (HI - LO) / 2 ** STEPS)
 
 
 print("loading corpora and collecting training checkpoints...", flush=True)
@@ -178,6 +204,7 @@ for src, tgt in [("synthetic", "reuters"), ("reuters", "synthetic")]:
         "native_full": fit(*coll[tgt], cols=None),
         "transfer_full": fit(*coll[src], cols=None),
         "transfer_scalefree": fit(*coll[src], cols=SCALE_FREE),
+        "transfer_restd": fit(*coll[src], cols=None, restd_X=coll[tgt][0]),
     }
     fixed_val = {ef: run_fixed(data[tgt], sl_val, ef) for ef in FIXED_GRID}
     rows = []
@@ -191,14 +218,14 @@ for src, tgt in [("synthetic", "reuters"), ("reuters", "synthetic")]:
         cell = {"target": T, "fixed_ef": ef0, "fixed_recall": f_rec,
                 "fixed_dists": f_dist, "models": {}}
         for mname, model in models.items():
-            tau = calibrate(data[tgt], model, T)
+            tau, floored = calibrate(data[tgt], model, T)
             rec, dist = run_pred(data[tgt], sl_te, model, tau)
             cell["models"][mname] = {
-                "tau": tau, "recall": rec, "dists": dist,
+                "tau": tau, "tau_floored": floored, "recall": rec, "dists": dist,
                 "contract_met": bool(rec >= T),
                 "dividend": 1 - dist / f_dist}
             print(f" T={T} {mname}: recall={rec:.4f} dists={dist:.0f} "
                   f"dividend={100*(1-dist/f_dist):+.1f}%", flush=True)
         rows.append(cell)
     out["directions"][f"{src}->{tgt}"] = rows
-    save("exp13_transfer", out)
+    save("exp13_transfer" if QSEED == 523 else f"exp13_transfer_seed{QSEED}", out)

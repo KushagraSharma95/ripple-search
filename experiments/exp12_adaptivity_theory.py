@@ -26,6 +26,13 @@ grid, both evaluated once on test. The measured quantity is the DIVIDEND:
 target) cell, with contract-met flags. Prediction registered up front:
 dividend increases with spread at every target, and is ~0 (or negative)
 for const at all targets. Published win or lose.
+
+v2 amendment (after adversarial review, before the v2 run): the v1 tau
+bisection was bounded to [T-0.05, 1.10] and pinned the bimodal 0.90/0.95
+cells at that floor (controller overshot its target; those v1 dividends are
+understated lower bounds). v2 searches [-0.5, 1.5] in 14 steps, records a
+floor flag, and runs on a fresh second seed (701) via QSEED so every cell
+has two independent measurements.
 """
 
 import numpy as np
@@ -40,7 +47,8 @@ K = 10
 TARGETS = [0.90, 0.95, 0.99]
 CHECK_EVERY = 8
 N_TRAIN, N_VAL, N_TEST = 600, 300, 300
-QSEED = 419
+import os
+QSEED = int(os.environ.get("QSEED", "419"))
 CEILING = 768
 
 DISTS = {
@@ -143,9 +151,10 @@ for dname, eps_fn in DISTS.items():
                           "ceiling_recall_val": ceil_recall})
             print(f" T={T}: UNACHIEVABLE (ceiling {ceil_recall:.4f})", flush=True)
             continue
-        lo, hi = T - 0.05, 1.10
+        LO, HI, STEPS = -0.5, 1.5, 14
+        lo, hi = LO, HI
         best = None
-        for _ in range(8):
+        for _ in range(STEPS):
             mid = (lo + hi) / 2
             rec, dist = run_pred(sl_val, mid)
             if rec >= T:
@@ -153,7 +162,8 @@ for dname, eps_fn in DISTS.items():
                 hi = mid
             else:
                 lo = mid
-        tau = best if best is not None else hi
+        tau = best if best is not None else HI
+        tau_floored = bool(tau - LO < 2 * (HI - LO) / 2 ** STEPS)
         ok = [ef for ef in FIXED_GRID if fixed_val[ef][0] >= T]
         if not ok:
             cells.append({"target": T, "unachievable": True,
@@ -163,7 +173,8 @@ for dname, eps_fn in DISTS.items():
         p_rec, p_dist = run_pred(sl_te, tau)
         f_rec, f_dist = run_fixed(sl_te, ef0)
         dividend = 1 - p_dist / f_dist
-        cells.append({"target": T, "tau": tau, "fixed_ef": ef0,
+        cells.append({"target": T, "tau": tau, "tau_floored": tau_floored,
+                      "fixed_ef": ef0,
                       "pred_recall": p_rec, "pred_dists": p_dist,
                       "fixed_recall": f_rec, "fixed_dists": f_dist,
                       "contract_met": bool(p_rec >= T),
@@ -174,4 +185,4 @@ for dname, eps_fn in DISTS.items():
     out["distributions"][dname] = {
         "eps_mean": float(np.mean(eps)), "eps_std": float(np.std(eps)),
         "ceiling_recall_val": ceil_recall, "cells": cells}
-    save("exp12_adaptivity_theory", out)
+    save("exp12_adaptivity_theory" if QSEED == 419 else f"exp12_adaptivity_theory_seed{QSEED}", out)

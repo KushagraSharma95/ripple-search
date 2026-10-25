@@ -52,7 +52,8 @@ M_TARGETS = [8, 9, 10]
 DELTAS = [0.1, 0.2]
 CHECK_EVERY = 8
 N_TRAIN, N_CAL, N_TEST = 600, 300, 300
-QSEED = 311
+import os
+QSEED = int(os.environ.get("QSEED", "311"))
 
 
 def hetero_queries(X, n, seed):
@@ -172,7 +173,9 @@ def run_dataset(name):
                     if hits >= m_target:
                         return tau
                     break
-        if tr[-1][1] >= m_target and cands:
+        if tr[-1][1] >= m_target:
+            if not cands:
+                return -np.inf  # no checkpoints: stop rule never fires
             # Only the no-early-stop ceiling point meets the contract: the
             # critical value is anything strictly above every observed p_t,
             # so any tau >= c_i provably runs to the bound.
@@ -259,4 +262,4 @@ out = {"description": __doc__, "k": K, "query_seed": QSEED,
        "split": [N_TRAIN, N_CAL, N_TEST], "datasets": {}}
 for name in ["reuters_lsa256", "synthetic_hetero"]:
     out["datasets"][name] = run_dataset(name)
-    save("exp11_conformal_contracts", out)
+    save("exp11_conformal_contracts" if QSEED == 311 else f"exp11_conformal_contracts_seed{QSEED}", out)
