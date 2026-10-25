@@ -60,7 +60,7 @@ absorb.
 - **Synthetic:** conformal was cheaper *and* guaranteed in 12/12 cells,
   with 6.6–24.9% less work than the baseline.
 - **Reuters:** conformal spent 1.08–1.93× the baseline's work, and the
-  price depended on the seed (1.08–1.42× on seed 809, 1.58–1.93× on
+  price depended on the seed (1.08–1.41× on seed 809, 1.58–1.93× on
   seed 311).
 
 Part of the Reuters "price" is simply the cost of actually keeping a
@@ -76,6 +76,11 @@ promise that the cheaper baseline breaks in 9 of 12 cells.
   mean-recall controller) was never implemented. It is dropped here, with
   this note, because it guarantees nothing per query and exp10 reports it
   on its own seeds.
+- *Stale protocol text in one result file.* The scripted docstring
+  amendment for seed 809 was a silent no-op (whitespace mismatch), so
+  `exp11_conformal_contracts_seed809.json` embeds the v1 description. Its
+  `query_seed` field (809) is authoritative. The amendment is now in the
+  code, and the seed was registered in commit ec1b29d before the run.
 
 ## 2. When adaptivity pays: the difficulty-variance theory (exp12)
 
@@ -125,16 +130,31 @@ target.
   explain.** The high const cell is contract-inflated (†) and the low
   bimodal cell is floor-understated (§).
 - **"About zero at zero variance" is refuted on both seeds.** Constant
-  noise still yields +8–13% at every target. Per-query difficulty varies
-  intrinsically with the region of the corpus a query lands in, even when
-  the injected noise is identical.
-- **Amended theory:** the dividend tracks *total realized* difficulty
-  variance, of which injected spread is one component.
+  noise still yields +7.8–13.2% at every target. Five of the six constant
+  cells carry a flag, and the top value (13.2%) is a † cell whose dividend
+  is inflated. But the controller misses in those cells are at most 0.4
+  points of recall, which cannot plausibly erase dividends of 8–13%. The
+  one fully clean constant cell (seed 701 at 0.99, both methods met)
+  still shows +9.5%.
+- **Amended hypothesis (post hoc, not yet tested):** the dividend tracks
+  *total realized* difficulty variance, of which injected spread is only
+  one component; the rest would come from intrinsic per-region
+  difficulty such as local density and hubness. exp12 did not measure
+  this. Testing it needs a per-query difficulty measure, for example the
+  smallest fixed budget each query needs, so realized variance can be
+  computed directly.
 
-**What doesn't hold:** at 0.99 the trend is not monotone on either seed.
-Most 0.99 cells have both methods missing a near-ceiling target, so
-selection noise dominates. Bimodal is still the highest 0.99 cell on both
-seeds.
+**What doesn't hold:**
+- **The trend at 0.99.** The registered prediction said the dividend
+  rises with spread at *every* target. At 0.99 it is not monotone on
+  either seed (seed 701: +9.5, −0.9, +6.8, +14.4, +28.8). In that row the
+  controller missed its contract in 6 of 10 cells and both methods missed
+  in 4 of 10, so calibration and selection noise near the substrate's
+  ceiling dominate. Bimodal is still the highest 0.99 cell on both seeds.
+- **"Higher target, bigger dividend."** On seed 701, dividends mostly
+  *fall* from 0.90 to 0.99 (bimodal 51.5 → 28.8, wide 21.9 → 14.4,
+  medium 15.8 → 6.8, narrow 12.2 → −0.9). A higher target does not by
+  itself mean a larger dividend.
 
 **Practical reading.** Production traffic that mixes near-duplicate
 lookups with exploratory queries looks bimodal. That is where adaptive
@@ -166,21 +186,47 @@ val-selected fixed baseline:
 † The native controller misses the 0.90 mean-recall contract by 0.07
 points; the transferred cells all meet it.
 
+In the synthetic→Reuters 0.95 row, the val-selected fixed baseline itself
+missed the target on test (recall 0.9477) while every controller variant
+met it. A compliant baseline would cost more, so every dividend in that
+row is understated.
+
+**Valid seed-523 cells.** Only the synthetic→Reuters half of v1 was pinned
+at the floor. The Reuters→synthetic cells were not (tau 0.86–1.06, well
+inside the v1 range), so they stand as a second seed for that direction.
+The re-standardized variant did not exist in v1.
+
+| direction | target | native | transfer | scale-free |
+|---|---|---|---|---|
+| Reuters → synthetic | 0.90 | +28.8%† | +2.0% | −30.5% |
+| Reuters → synthetic | 0.95 | +24.6% | +3.3% | −23.2% |
+
+† Native misses the contract (0.8983).
+
 **Verdicts:**
 - **(a) confirmed.** The plain-transfer failure shrank from −140/−232% to
   −59/−65%. The comparison spans two seeds, so this is indicative rather
   than a controlled measurement.
-- **(b) refuted.** Re-standardization was the worst variant in all four
-  cells.
-- **Scale-free features: mixed.** They give the only positive transferred
-  dividend (+9.7%), but in one direction only.
-- **No transferred variant came within 29 points of native in any cell.**
+- **(b) refuted.** Re-standardization was the worst variant in 3 of 4
+  cells. In the fourth (synthetic→Reuters at 0.95) it beat plain transfer
+  by 4.1 points but stayed 113.7 points below native.
+- **Scale-free features: mixed, and seed-dependent.** On seed 617 they
+  give the only positive transferred dividend (+9.7%, synthetic→Reuters
+  0.90). On seed 523, plain transfer is the positive one (+2.0%, +3.3%)
+  and scale-free is strongly negative.
+- **Across both seeds, transfer kept little of the native dividend.** In
+  all six valid cells, the best transferred variant kept at most a
+  quarter of the native controller's dividend, and in 3 of the 6 it fell
+  below the plain fixed baseline. The closest it came was seed 523,
+  Reuters→synthetic at 0.95: +3.3% against native +24.6%, a 21-point
+  gap.
 
 **Conclusion, scoped to what was tested:** across these two corpora, with
 this ridge feature set and these three adaptation strategies, the
-controller did not transfer. Per-corpus training was needed: about 600
-labeled queries in one instrumented pass. That is cheap but not optional.
-Corpus-statistics-conditioned predictors are the obvious next step.
+controller did not transfer usefully. Per-corpus training was needed:
+about 600 labeled queries in one instrumented pass. That is cheap but not
+optional. Corpus-statistics-conditioned predictors are the obvious next
+step.
 
 The native results on the corrected protocol also confirm the Part 3
 disclosure. On a Reuters target the native controller saves 39–59% at
@@ -193,12 +239,18 @@ A calibrated, adaptively terminated search layer with three properties:
 1. **Per-query recall guarantees** that held 24/24 across two seeds,
    where the default "pick the cheapest config that passed" approach
    failed 10/24. On a synthetic corpus the guarantee also cost less work.
-2. **A tested, partly corrected theory of when adaptivity pays:** total
-   difficulty variance times the height of the target. Bimodal
-   difficulty, which is what mixed production traffic looks like, halves
-   the work on a clean seed.
-3. **A measured deployment boundary:** no cross-corpus transfer for this
-   model class, so per-corpus training is required.
+2. **A tested, partly refuted prediction about when adaptivity pays.**
+   On the clean seed the dividend rises strictly with injected difficulty
+   spread at 0.90 and 0.95. Bimodal difficulty, which is what mixed
+   production traffic looks like, halves the work there. Two parts of the
+   registered prediction failed: the dividend does not vanish at zero
+   injected spread, and the trend does not hold at 0.99. The "total
+   realized variance" explanation is a post-hoc hypothesis that has not
+   been tested yet. A target-height effect was never tested, and on
+   synthetic data dividends mostly fall as the target rises.
+3. **A measured deployment boundary:** for this model class, the best
+   transferred controller kept at most a quarter of the native dividend,
+   so per-corpus training is required.
 
 Our 2024–26 literature sweep (FRONTIER.md) is not exhaustive. Within it,
 the DARTH / LAET / Ada-ef line reports empirical target-hitting rather

@@ -273,10 +273,16 @@ one missed by 0.3pt), most early-exit comparisons at Reuters, the GBM
 variant at 0.95. GloVe-100: every method, baselines included, misses the
 0.90 contract on test (flat-graph substrate ceiling ~0.89–0.92) — the
 controller is substrate-agnostic but contracts need a substrate that can
-reach them; a hierarchical graph is the orthogonal next step. The pattern
-worth noting: the controller's advantage GROWS with the declared target
-(3–13% at 0.90 → 39–55% at 0.99), exactly the regime public benchmarks
-stop measuring.
+reach them; a hierarchical graph is the orthogonal next step.
+
+**Withdrawn:** an earlier version of this section highlighted the
+advantage growing with the declared target (3–13% at 0.90 → 39–55% at
+0.99). That pattern does not survive the calibration fix. The 0.90/0.95
+Reuters cells are exactly the floor-depressed ones; on a fresh seed under
+the corrected protocol the native controller already saves 39–59% on
+Reuters at 0.90/0.95 (exp13 v2). On synthetic data, dividends mostly *fall*
+from 0.90 to 0.99 (exp12). How the dividend depends on the target is
+corpus-dependent and has not been tested as a theory.
 
 ## Part 4 — calibrated adaptive termination (exp11–exp13)
 
@@ -294,18 +300,20 @@ with every flag and caveat: `docs/RESEARCH.md`.
   cheaper, with 6.6–24.9% less work. On Reuters the guarantee cost
   1.1–1.9× the work of a baseline that mostly fails to keep its own
   promise.
-- **When adaptivity pays (exp12).** The registered theory said the
-  dividend scales with query-difficulty variance. On the clean seed, the
-  dividend rises strictly with difficulty spread at 0.90 and 0.95, from
-  about 9% to **about 52% for bimodal traffic**: half the work for the
-  same contract. The registered "zero at zero variance" prediction is
-  refuted on both seeds (+8–13% remains), which led to an amended theory:
-  *total realized* difficulty variance, including the corpus's intrinsic
-  variance, drives the dividend.
+- **When adaptivity pays (exp12).** The registered prediction said the
+  dividend rises with query-difficulty spread at every target and
+  vanishes at zero spread. Partly confirmed: on the clean seed it rises
+  strictly with spread at 0.90 and 0.95, from about 9% to **about 52% for
+  bimodal traffic**, half the work for the same contract. Partly refuted,
+  on both seeds: +8–13% remains at zero injected spread, and at 0.99 the
+  trend is not monotone. The proposed explanation, that *total realized*
+  difficulty variance (including the corpus's own) drives the dividend,
+  is a post-hoc hypothesis that has not been tested yet.
 - **Transfer (exp13).** This is a negative result, scoped to what was
-  tested: none of three adaptation strategies let a controller trained on
-  one corpus work on another, and the best came within 29 points of
-  native. The first version's −232% was an artifact of a calibration-floor
+  tested. Across six valid cells on two seeds, the best transferred
+  variant kept at most a quarter of the native controller's dividend and
+  fell below the plain fixed baseline in three. The first version's −232%
+  was an artifact of a calibration-floor
   bug. The review found that bug, fixed it, and the fix was re-verified on
   a fresh seed; it also showed that six published exp10 savings were
   understated.

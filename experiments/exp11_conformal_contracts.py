@@ -36,6 +36,23 @@ Protocol (frozen before running; published win or lose):
     CALIBRATION coverage >= 1-delta, evaluated once on test; (b) exp10's
     mean-recall bisection controller is reported for context, not as a
     coverage competitor (it guarantees nothing per-query)
+
+Amendments (after adversarial review, registered in commit ec1b29d before
+the seed-809 run):
+  - Baseline (b) was registered but never implemented. It is dropped,
+    with this disclosure: it is not a coverage competitor, and exp10
+    reports it on its own seeds.
+  - critical_value returned +inf for a calibration trace with no
+    checkpoints even when the full-budget run met the contract. The
+    correct value is -inf, since the stop rule never fires and any tau
+    works. The v1 behavior is conservative (it can only raise tau_hat),
+    so seed-311 validity is unaffected.
+  - A second fresh query seed, 809, set via the QSEED env var, runs with
+    the corrected function.
+  - This amendment was meant to land with the seed-809 run, but a
+    whitespace mismatch made the scripted edit a silent no-op. The
+    seed-809 result file therefore embeds the v1 docstring above as its
+    "description"; its query_seed field (809) is authoritative.
 """
 
 import time
