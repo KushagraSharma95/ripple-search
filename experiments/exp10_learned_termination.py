@@ -2,26 +2,36 @@
 
 A small regressor predicts the search's CURRENT recall from cheap dynamics
 features at checkpoints; the search stops when the predicted recall clears
-the declared target. Protocol:
+the declared target. "Meets the contract" means MEAN test recall >= target
+(the same mean-recall reading DARTH's declared targets use), not a per-query
+guarantee.
 
-  - queries: 1,200 per dataset with heterogeneous difficulty (per-query
-    noise eps ~ U[0.05, 0.5] around corpus vectors; query vector excluded
-    from its own ground truth), split 600 train / 300 val / 300 test with
-    seeds disjoint from all prior experiments
-  - training: checkpoint feature vectors labeled with true running recall,
-    collected at the ef ceiling on TRAIN queries only
-  - model: ridge regression on expanded features (deployment = one dot
-    product per checkpoint); a gradient-boosted reference model is fit to
-    measure how much headroom the linear deployment leaves
-  - calibration: per declared target T in {0.90, 0.95, 0.99}, the stop
-    threshold tau_T is the smallest value whose achieved mean recall on VAL
-    clears T; frozen before touching TEST
-  - test: achieved recall + distance computations on TEST, against the two
-    baselines on identical queries: the cheapest fixed ef that clears T,
-    and the cheapest (ef, patience) heuristic early-exit that clears T
+Protocol (v2 — frozen before the final runs):
+  - queries: 1,200 per dataset, heterogeneous difficulty: per-query noise
+    eps ~ U[0.01, 0.15] around unit-norm corpus vectors, source doc excluded
+    from truth AND from every method's results symmetrically. At the low-eps
+    end queries are near-duplicates of indexed vectors, the regime most
+    favorable to early termination; this is disclosed, not hidden.
+  - split 600 train / 300 val / 300 test. The QUERY SEED is taken from the
+    environment (QSEED); the published runs use two fresh seeds (137, 211)
+    never evaluated during development.
+  - training on train only; stop thresholds tau calibrated per target by
+    bisection on val; baselines (fixed ef on a x1.2 grid, heuristic
+    early-exit on an (ef, patience) grid) are ALSO selected on val — the
+    cheapest config whose val recall clears the target — and then evaluated
+    once on test, identically to the predictor.
+  - a target above the substrate's val ceiling is reported unachievable.
 
-Win condition: at each declared target, achieved recall >= T with fewer
-mean distance computations than both baselines.
+Development-history disclosure: three earlier development rounds ran with
+query seed 31 and are preserved in git history (commits 487efa0, ce2de16,
+6c0076b, 2c85e36). Between those rounds the difficulty spread was reduced
+(U[0.05,0.5] intended, actually U[0.02,0.25], then U[0.01,0.15]), the GloVe
+graph was rebuilt (degree 32->48, entry probes 4->8), and a GBM variant was
+added — i.e., the seed-31 "test" split influenced development and its
+numbers are NOT publication-grade. An earlier docstring also misstated the
+eps range. The published results come only from the fresh-seed runs under
+this frozen protocol, reported per variant (ridge deployment / GBM
+reference), win or lose, on both seeds.
 """
 
 import json
@@ -41,6 +51,8 @@ TARGETS = [0.90, 0.95, 0.99]
 CHECK_EVERY = 8
 N_TRAIN, N_VAL, N_TEST = 600, 300, 300
 GLOVE_DIR = Path("/home/user/datasets/glove")
+import os
+QSEED = int(os.environ.get("QSEED", "137"))
 
 
 def hetero_queries(X, n, seed):
@@ -111,7 +123,7 @@ def run_dataset(name):
     bf.build(X)
     bs.X = bf.X  # share the normalized matrix
 
-    Q, qids = hetero_queries(bf.X, N_TRAIN + N_VAL + N_TEST, seed=31)
+    Q, qids = hetero_queries(bf.X, N_TRAIN + N_VAL + N_TEST, seed=QSEED)
     truth = truth_excluding_self(bf, Q, qids)
     # Every search retrieves K+1 and drops the query's source doc, matching
     # the self-excluded ground truth; otherwise the source doc occupies one
@@ -221,39 +233,36 @@ def run_dataset(name):
                   f"dists={best[1]['mean_dists']:.0f}", flush=True)
 
     # ---- baselines on TEST
-    def run_fixed(ef):
+    def run_baseline(sl, mode, ef, p=0):
         recs, dists = [], []
         with threadpool_limits(limits=1):
-            for q, t, sid in zip(Q[sl_test], truth[sl_test], qids[sl_test]):
-                r = bs.query(q, k=K + 1, mode="fixed", ef=ef)
+            for q, t, sid in zip(Q[sl], truth[sl], qids[sl]):
+                if mode == "fixed":
+                    r = bs.query(q, k=K + 1, mode="fixed", ef=ef)
+                else:
+                    r = bs.query(q, k=K + 1, mode="early_exit", ef=ef, patience=p)
                 recs.append(recall_at_k([i for i in r if i != sid][:K], t, K))
                 dists.append(bs.last_dist_count)
         return float(np.mean(recs)), float(np.mean(dists))
 
-    def run_early(ef, p):
-        recs, dists = [], []
-        with threadpool_limits(limits=1):
-            for q, t, sid in zip(Q[sl_test], truth[sl_test], qids[sl_test]):
-                r = bs.query(q, k=K + 1, mode="early_exit", ef=ef, patience=p)
-                recs.append(recall_at_k([i for i in r if i != sid][:K], t, K))
-                dists.append(bs.last_dist_count)
-        return float(np.mean(recs)), float(np.mean(dists))
-
-    fixed_rows = []
-    for ef in [16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768]:
+    # x1.2 fixed grid and widened early grid, SELECTED ON VAL per target.
+    FIXED_GRID = [16, 20, 24, 29, 35, 42, 50, 60, 72, 86, 104, 124, 149,
+                  179, 215, 258, 310, 372, 446, 535, 642, 768]
+    EARLY_GRID = [(ef, p) for ef in [64, 96, 128, 192, 256, 384, 512, 768]
+                  for p in [4, 8, 16, 32, 64, 128]]
+    fixed_val = []
+    for ef in FIXED_GRID:
         if ef > ceiling:
             continue
-        rec, dist = run_fixed(ef)
-        fixed_rows.append({"ef": ef, "recall": rec, "mean_dists": dist})
-        print(f" fixed ef={ef}: recall={rec:.4f} dists={dist:.0f}", flush=True)
-    early_rows = []
-    for ef in [64, 128, 192, 256, 384, 512]:
+        rec, dist = run_baseline(sl_val, "fixed", ef)
+        fixed_val.append({"ef": ef, "recall": rec, "mean_dists": dist})
+    early_val = []
+    for ef, pat in EARLY_GRID:
         if ef > ceiling:
             continue
-        for p in [8, 16, 32, 64, 128]:
-            rec, dist = run_early(ef, p)
-            early_rows.append({"ef": ef, "patience": p, "recall": rec,
-                               "mean_dists": dist})
+        rec, dist = run_baseline(sl_val, "early", ef, pat)
+        early_val.append({"ef": ef, "patience": pat, "recall": rec,
+                          "mean_dists": dist})
 
     # ---- test the frozen predictor per target and score the win condition
     results = []
@@ -262,36 +271,48 @@ def run_dataset(name):
             results.append({"target": T, "unachievable": True,
                             "ceiling_recall_val": ceiling_recall})
             continue
-        row = {"target": T, "variants": {}}
+        # Baseline configs chosen on VAL (cheapest clearing T), like tau.
+        fxv = [r for r in fixed_val if r["recall"] >= T]
+        fx_cfg = min(fxv, key=lambda r: r["mean_dists"]) if fxv else None
+        eev = [r for r in early_val if r["recall"] >= T]
+        ee_cfg = min(eev, key=lambda r: r["mean_dists"]) if eev else None
+        fx_test = None
+        if fx_cfg:
+            rec, dist = run_baseline(sl_test, "fixed", fx_cfg["ef"])
+            fx_test = {"ef": fx_cfg["ef"], "recall": rec, "mean_dists": dist}
+        ee_test = None
+        if ee_cfg:
+            rec, dist = run_baseline(sl_test, "early", ee_cfg["ef"], ee_cfg["patience"])
+            ee_test = {"ef": ee_cfg["ef"], "patience": ee_cfg["patience"],
+                       "recall": rec, "mean_dists": dist}
+        row = {"target": T, "fixed_val_choice": fx_cfg, "fixed_test": fx_test,
+               "early_val_choice": ee_cfg, "early_test": ee_test, "variants": {}}
         for vname, fn in variants.items():
             pr = run_predictor(Q[sl_test], truth[sl_test], qids[sl_test],
                                tau=frozen[vname][T], predict_fn=fn)
-            fx = [r for r in fixed_rows if r["recall"] >= min(T, pr["recall"])]
-            fx_best = min(fx, key=lambda r: r["mean_dists"]) if fx else None
-            ee = [r for r in early_rows if r["recall"] >= min(T, pr["recall"])]
-            ee_best = min(ee, key=lambda r: r["mean_dists"]) if ee else None
             vrow = {"tau": frozen[vname][T], "predictor": pr,
-                    "fixed_best": fx_best, "early_exit_best": ee_best,
-                    "beats_fixed": bool(fx_best and pr["mean_dists"] < fx_best["mean_dists"]
-                                        and pr["recall"] >= T),
-                    "beats_early": bool(ee_best and pr["mean_dists"] < ee_best["mean_dists"]
-                                        and pr["recall"] >= T)}
+                    "meets_contract": bool(pr["recall"] >= T),
+                    "beats_fixed": bool(fx_test and pr["recall"] >= T
+                                        and pr["mean_dists"] < fx_test["mean_dists"]),
+                    "beats_early": bool(ee_test and pr["recall"] >= T
+                                        and pr["mean_dists"] < ee_test["mean_dists"])}
             row["variants"][vname] = vrow
             print(f" TARGET {T} [{vname}]: recall={pr['recall']:.4f} "
-                  f"dists={pr['mean_dists']:.0f} | fixed {fx_best} | early {ee_best} | "
-                  f"WIN fixed={vrow['beats_fixed']} early={vrow['beats_early']}", flush=True)
+                  f"dists={pr['mean_dists']:.0f} | fixed@test {fx_test} | "
+                  f"early@test {ee_test} | WIN fixed={vrow['beats_fixed']} "
+                  f"early={vrow['beats_early']}", flush=True)
         results.append(row)
 
     return {"ceiling": ceiling, "ceiling_recall_val": ceiling_recall,
             "r2_linear_train": r2_lin, "r2_gbm_train": r2_gbm,
             "n_checkpoint_rows": len(yf), "frozen_tau": frozen,
-            "fixed_sweep": fixed_rows, "early_sweep": early_rows,
+            "fixed_val_sweep": fixed_val, "early_val_sweep": early_val,
             "targets": results}
 
 
 names = sys.argv[1:] or ["reuters_lsa256", "synthetic_hetero", "glove100"]
 out = {"description": __doc__, "k": K, "check_every": CHECK_EVERY,
-       "split": [N_TRAIN, N_VAL, N_TEST], "datasets": {}}
+       "split": [N_TRAIN, N_VAL, N_TEST], "query_seed": QSEED, "datasets": {}}
 for name in names:
     out["datasets"][name] = run_dataset(name)
-    save("exp10_learned_termination", out)  # checkpoint after each dataset
+    save(f"exp10_learned_termination_seed{QSEED}", out)  # checkpoint per dataset
