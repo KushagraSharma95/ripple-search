@@ -261,6 +261,13 @@ Cross-seed-consistent results (contract = mean test recall >= target):
 | synthetic | 0.90 | 0.901–0.908 | 20–23% (also beats tuned early-exit, both seeds) |
 | synthetic | 0.95 | 0.950–0.951 | 22–27% (early-exit cannot reach the bar) |
 
+Calibration-floor disclosure (found in a later review): the stop-threshold
+search was bounded below at T−0.05, and six Reuters controller cells at
+0.90/0.95 (both seeds) were pinned at that floor — the controller
+overshot its target (e.g. 0.967 recall for a 0.90 contract), spending
+more work than the contract required. Those savings are therefore
+**understated lower bounds**; the bug is fixed for all later experiments.
+
 Not claimed (seed-inconsistent or missed): synthetic@0.99 (one seed met,
 one missed by 0.3pt), most early-exit comparisons at Reuters, the GBM
 variant at 0.95. GloVe-100: every method, baselines included, misses the
