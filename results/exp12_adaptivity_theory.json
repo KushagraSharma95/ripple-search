@@ -1,0 +1,132 @@
+{
+  "description": "Experiment 12 \u2014 when does per-query adaptivity pay? A controlled test of\nthe difficulty-variance hypothesis.\n\nexp10 measured the adaptive controller's dividend growing with the declared\ntarget (3-13% at 0.90 -> 39-55% at 0.99 on Reuters) and vanishing on a\nhomogeneous synthetic workload. Hypothesis: the dividend is driven by\nQUERY-DIFFICULTY VARIANCE \u2014 a fixed budget must be sized for the hardest\nqueries, so the harvestable waste is the easy-query mass; with zero\nvariance there is nothing to harvest at any target.\n\nDesign: one corpus (synthetic, N=100k, D=64 \u2014 fixed substrate), five query\ndifficulty distributions with (approximately) MATCHED MEAN eps and\nincreasing spread:\n\n    const    : eps = 0.080 for every query          (zero variance)\n    narrow   : eps ~ U[0.06, 0.10]\n    medium   : eps ~ U[0.03, 0.13]\n    wide     : eps ~ U[0.01, 0.15]\n    bimodal  : eps in {0.02, 0.14}, 50/50           (max spread at this mean)\n\nFor each distribution: train/val/test = 600/300/300 (fresh seed 419, never\nused), ridge controller as in exp10, tau calibrated on val per target\nT in {0.90, 0.95, 0.99}, fixed-ef baseline selected on val on the x1.2\ngrid, both evaluated once on test. The measured quantity is the DIVIDEND:\n1 - (controller mean dists / fixed-baseline mean dists), per (distribution,\ntarget) cell, with contract-met flags. Prediction registered up front:\ndividend increases with spread at every target, and is ~0 (or negative)\nfor const at all targets. Published win or lose.\n",
+  "k": 10,
+  "query_seed": 419,
+  "targets": [
+    0.9,
+    0.95,
+    0.99
+  ],
+  "distributions": {
+    "const": {
+      "eps_mean": 0.07999999076128006,
+      "eps_std": 7.450580596923828e-09,
+      "ceiling_recall_val": 0.9933333333333333,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8744140625000001,
+          "fixed_ef": 179,
+          "pred_recall": 0.897666666666667,
+          "pred_dists": 4060.4,
+          "fixed_recall": 0.905,
+          "fixed_dists": 4675.743333333333,
+          "contract_met": false,
+          "dividend": 0.13160331726221064
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9429687499999999,
+          "fixed_ef": 310,
+          "pred_recall": 0.9483333333333334,
+          "pred_dists": 6992.696666666667,
+          "fixed_recall": 0.9526666666666669,
+          "fixed_dists": 7585.7733333333335,
+          "contract_met": false,
+          "dividend": 0.07818275614176007
+        },
+        {
+          "target": 0.99,
+          "tau": 1.006875,
+          "fixed_ef": 642,
+          "pred_recall": 0.9873333333333333,
+          "pred_dists": 12653.12,
+          "fixed_recall": 0.9876666666666665,
+          "fixed_dists": 14087.053333333333,
+          "contract_met": false,
+          "dividend": 0.10179086423562433
+        }
+      ]
+    },
+    "narrow": {
+      "eps_mean": 0.08033766597509384,
+      "eps_std": 0.011500999331474304,
+      "ceiling_recall_val": 0.9929999999999999,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8744140625000001,
+          "fixed_ef": 179,
+          "pred_recall": 0.9040000000000001,
+          "pred_dists": 4125.98,
+          "fixed_recall": 0.9103333333333334,
+          "fixed_dists": 4689.826666666667,
+          "contract_met": true,
+          "dividend": 0.12022761324512365
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9289062499999998,
+          "fixed_ef": 310,
+          "pred_recall": 0.9483333333333334,
+          "pred_dists": 6262.733333333334,
+          "fixed_recall": 0.9566666666666667,
+          "fixed_dists": 7596.52,
+          "contract_met": false,
+          "dividend": 0.1755786421501776
+        },
+        {
+          "target": 0.99,
+          "tau": 1.0175,
+          "fixed_ef": 768,
+          "pred_recall": 0.9906666666666668,
+          "pred_dists": 13825.533333333333,
+          "fixed_recall": 0.9936666666666667,
+          "fixed_dists": 16304.303333333333,
+          "contract_met": true,
+          "dividend": 0.15203164154412407
+        }
+      ]
+    },
+    "medium": {
+      "eps_mean": 0.08084414154291153,
+      "eps_std": 0.02875249832868576,
+      "ceiling_recall_val": 0.995,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8646484375000001,
+          "fixed_ef": 179,
+          "pred_recall": 0.9033333333333333,
+          "pred_dists": 3761.633333333333,
+          "fixed_recall": 0.916,
+          "fixed_dists": 4682.566666666667,
+          "contract_met": true,
+          "dividend": 0.1966727649366089
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9242187499999999,
+          "fixed_ef": 310,
+          "pred_recall": 0.9506666666666668,
+          "pred_dists": 5947.776666666667,
+          "fixed_recall": 0.959,
+          "fixed_dists": 7594.15,
+          "contract_met": true,
+          "dividend": 0.21679494523196585
+        },
+        {
+          "target": 0.99,
+          "tau": 1.00875,
+          "fixed_ef": 642,
+          "pred_recall": 0.9883333333333333,
+          "pred_dists": 12583.506666666666,
+          "fixed_recall": 0.9923333333333333,
+          "fixed_dists": 14088.58,
+          "contract_met": false,
+          "dividend": 0.10682931376571192
+        }
+      ]
+    }
+  }
+}
