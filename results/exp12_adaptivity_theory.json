@@ -127,6 +127,86 @@
           "dividend": 0.10682931376571192
         }
       ]
+    },
+    "wide": {
+      "eps_mean": 0.08118179440498352,
+      "eps_std": 0.040253497660160065,
+      "ceiling_recall_val": 0.9953333333333332,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8607421875000001,
+          "fixed_ef": 179,
+          "pred_recall": 0.9056666666666668,
+          "pred_dists": 3541.5,
+          "fixed_recall": 0.9179999999999999,
+          "fixed_dists": 4678.64,
+          "contract_met": true,
+          "dividend": 0.2430492621787529
+        },
+        {
+          "target": 0.95,
+          "tau": 0.91796875,
+          "fixed_ef": 310,
+          "pred_recall": 0.95,
+          "pred_dists": 5539.923333333333,
+          "fixed_recall": 0.96,
+          "fixed_dists": 7582.9766666666665,
+          "contract_met": true,
+          "dividend": 0.26942629829183173
+        },
+        {
+          "target": 0.99,
+          "tau": 1.01125,
+          "fixed_ef": 642,
+          "pred_recall": 0.9906666666666668,
+          "pred_dists": 12614.443333333333,
+          "fixed_recall": 0.9929999999999999,
+          "fixed_dists": 14085.223333333333,
+          "contract_met": true,
+          "dividend": 0.10442006954332994
+        }
+      ]
+    },
+    "bimodal": {
+      "eps_mean": 0.08229999244213104,
+      "eps_std": 0.0599559023976326,
+      "ceiling_recall_val": 0.995,
+      "cells": [
+        {
+          "target": 0.9,
+          "tau": 0.8509765625000001,
+          "fixed_ef": 149,
+          "pred_recall": 0.9273333333333335,
+          "pred_dists": 3141.53,
+          "fixed_recall": 0.9013333333333332,
+          "fixed_dists": 3978.18,
+          "contract_met": true,
+          "dividend": 0.2103097396296798
+        },
+        {
+          "target": 0.95,
+          "tau": 0.9007812499999999,
+          "fixed_ef": 258,
+          "pred_recall": 0.9546666666666668,
+          "pred_dists": 4322.74,
+          "fixed_recall": 0.9513333333333333,
+          "fixed_dists": 6465.516666666666,
+          "contract_met": true,
+          "dividend": 0.3314161539036581
+        },
+        {
+          "target": 0.99,
+          "tau": 0.991875,
+          "fixed_ef": 642,
+          "pred_recall": 0.9883333333333335,
+          "pred_dists": 9039.816666666668,
+          "fixed_recall": 0.9926666666666667,
+          "fixed_dists": 14097.86,
+          "contract_met": false,
+          "dividend": 0.3587809308173959
+        }
+      ]
     }
   }
 }
