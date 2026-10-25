@@ -123,6 +123,122 @@
         },
         "beats_fixed": false
       }
+    ],
+    "synthetic_hetero": [
+      {
+        "m_target": 8,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8623382692925041,
+        "test_coverage": 0.9566666666666667,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.907,
+        "mean_dists": 3503.34,
+        "p95_dists": 7357.55,
+        "fixed_coverage_matched": {
+          "ef": 179,
+          "coverage": 0.9333333333333333,
+          "mean_dists": 4662.983333333334
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 8,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8299235298702996,
+        "test_coverage": 0.8766666666666667,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.875,
+        "mean_dists": 2744.45,
+        "p95_dists": 6032.450000000001,
+        "fixed_coverage_matched": {
+          "ef": 124,
+          "coverage": 0.8366666666666667,
+          "mean_dists": 3371.0866666666666
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 9,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.9191478803213933,
+        "test_coverage": 0.9066666666666666,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9483333333333333,
+        "mean_dists": 5509.4,
+        "p95_dists": 10317.45,
+        "fixed_coverage_matched": {
+          "ef": 258,
+          "coverage": 0.91,
+          "mean_dists": 6433.783333333334
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 9,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.0,
+        "tau_hat": 0.8860063769555016,
+        "test_coverage": 0.8366666666666667,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9263333333333333,
+        "mean_dists": 4221.21,
+        "p95_dists": 8480.2,
+        "fixed_coverage_matched": {
+          "ef": 215,
+          "coverage": 0.8633333333333333,
+          "mean_dists": 5484.556666666666
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 10,
+        "delta": 0.1,
+        "cal_infeasible_frac": 0.03666666666666667,
+        "tau_hat": 1.0155479931497915,
+        "test_coverage": 0.93,
+        "coverage_target": 0.9,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.993,
+        "mean_dists": 13070.316666666668,
+        "p95_dists": 17211.15,
+        "fixed_coverage_matched": {
+          "ef": 642,
+          "coverage": 0.9333333333333333,
+          "mean_dists": 14052.49
+        },
+        "beats_fixed": true
+      },
+      {
+        "m_target": 10,
+        "delta": 0.2,
+        "cal_infeasible_frac": 0.03666666666666667,
+        "tau_hat": 0.9765488443607229,
+        "test_coverage": 0.8433333333333334,
+        "coverage_target": 0.8,
+        "coverage_met": true,
+        "coverage_met_point": true,
+        "mean_recall": 0.9836666666666666,
+        "mean_dists": 9449.91,
+        "p95_dists": 16678.850000000002,
+        "fixed_coverage_matched": {
+          "ef": 446,
+          "coverage": 0.8333333333333334,
+          "mean_dists": 10353.86
+        },
+        "beats_fixed": true
+      }
     ]
   }
 }
