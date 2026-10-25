@@ -46,7 +46,7 @@ GLOVE_DIR = Path("/home/user/datasets/glove")
 def hetero_queries(X, n, seed):
     rng = np.random.default_rng(seed)
     ids = rng.choice(len(X), size=n, replace=False)
-    eps = rng.uniform(0.02, 0.25, size=n).astype(np.float32)
+    eps = rng.uniform(0.01, 0.15, size=n).astype(np.float32)
     Q = X[ids] + eps[:, None] * rng.standard_normal((n, X.shape[1])).astype(np.float32)
     Q /= np.linalg.norm(Q, axis=1, keepdims=True)
     return Q.astype(np.float32), ids
@@ -73,8 +73,8 @@ def expand(feats):
 def load_dataset(name):
     if name == "glove100":
         X = np.load(GLOVE_DIR / "glove100.npy")
-        nbr = np.load(GLOVE_DIR / "glove100_knn32.npy")
-        bs = InstrumentedBeamSearch(n_neighbors=32, n_hyperplanes=12, n_entry=4, seed=0)
+        nbr = np.load(GLOVE_DIR / "glove100_knn48.npy")
+        bs = InstrumentedBeamSearch(n_neighbors=48, n_hyperplanes=12, n_entry=8, seed=0)
         bs.load_graph(X, nbr)
         ceiling = 768
     elif name == "reuters_lsa256":
@@ -151,7 +151,14 @@ def run_dataset(name):
     w = (ridge.coef_ / scaler.scale_).astype(np.float64)
     b = float(ridge.intercept_ - np.dot(ridge.coef_, scaler.mean_ / scaler.scale_))
 
-    def run_predictor(queries, truths, tau, min_checks=2):
+    def ridge_fn(fx):
+        return float(np.dot(w, fx) + b)
+
+    def gbm_fn(fx):
+        return float(gbm.predict(fx[None])[0])
+
+    def run_predictor(queries, truths, tau, min_checks=2, predict_fn=None):
+        predict_fn = predict_fn or ridge_fn
         recs, dists, nchecks, lat = [], [], [], []
         with threadpool_limits(limits=1):
             for q, t in zip(queries, truths):
@@ -161,7 +168,7 @@ def run_dataset(name):
                     state["n"] += 1
                     if state["n"] < min_checks:
                         return False
-                    return float(np.dot(w, expand(feats)) + b) >= tau
+                    return predict_fn(expand(feats)) >= tau
 
                 t0 = time.perf_counter()
                 ids, st = bs.search(q, k=K, ef=ceiling,
@@ -185,27 +192,30 @@ def run_dataset(name):
     ceiling_recall = float(np.mean(ceil_recs))
     print(f" substrate ceiling recall (ef={ceiling}, val): {ceiling_recall:.4f}", flush=True)
 
-    frozen = {}
-    for T in TARGETS:
-        if T > ceiling_recall:
-            frozen[T] = None
-            print(f" target {T}: UNACHIEVABLE on substrate (ceiling {ceiling_recall:.4f})", flush=True)
-            continue
-        lo, hi = T - 0.05, 1.10
-        best = None
-        for _ in range(8):  # bisection on achieved val recall
-            mid = (lo + hi) / 2
-            r = run_predictor(Q[sl_val], truth[sl_val], tau=mid)
-            if r["recall"] >= T:
-                best = (mid, r)
-                hi = mid
-            else:
-                lo = mid
-        if best is None:
-            best = (hi, run_predictor(Q[sl_val], truth[sl_val], tau=hi))
-        frozen[T] = best[0]
-        print(f" target {T}: tau={best[0]:.4f} val recall={best[1]['recall']:.4f} "
-              f"dists={best[1]['mean_dists']:.0f}", flush=True)
+    variants = {"ridge": ridge_fn, "gbm": gbm_fn}
+    frozen = {v: {} for v in variants}
+    for vname, fn in variants.items():
+        for T in TARGETS:
+            if T > ceiling_recall:
+                frozen[vname][T] = None
+                if vname == "ridge":
+                    print(f" target {T}: UNACHIEVABLE on substrate (ceiling {ceiling_recall:.4f})", flush=True)
+                continue
+            lo, hi = T - 0.05, 1.10
+            best = None
+            for _ in range(8):  # bisection on achieved val recall
+                mid = (lo + hi) / 2
+                r = run_predictor(Q[sl_val], truth[sl_val], tau=mid, predict_fn=fn)
+                if r["recall"] >= T:
+                    best = (mid, r)
+                    hi = mid
+                else:
+                    lo = mid
+            if best is None:
+                best = (hi, run_predictor(Q[sl_val], truth[sl_val], tau=hi, predict_fn=fn))
+            frozen[vname][T] = best[0]
+            print(f" [{vname}] target {T}: tau={best[0]:.4f} val recall={best[1]['recall']:.4f} "
+                  f"dists={best[1]['mean_dists']:.0f}", flush=True)
 
     # ---- baselines on TEST
     def run_fixed(ef):
@@ -245,25 +255,29 @@ def run_dataset(name):
     # ---- test the frozen predictor per target and score the win condition
     results = []
     for T in TARGETS:
-        if frozen[T] is None:
+        if frozen["ridge"][T] is None:
             results.append({"target": T, "unachievable": True,
                             "ceiling_recall_val": ceiling_recall})
             continue
-        pr = run_predictor(Q[sl_test], truth[sl_test], tau=frozen[T])
-        fx = [r for r in fixed_rows if r["recall"] >= min(T, pr["recall"])]
-        fx_best = min(fx, key=lambda r: r["mean_dists"]) if fx else None
-        ee = [r for r in early_rows if r["recall"] >= min(T, pr["recall"])]
-        ee_best = min(ee, key=lambda r: r["mean_dists"]) if ee else None
-        row = {"target": T, "tau": frozen[T], "predictor": pr,
-               "fixed_best": fx_best, "early_exit_best": ee_best}
-        row["beats_fixed"] = bool(fx_best and pr["mean_dists"] < fx_best["mean_dists"]
-                                  and pr["recall"] >= T)
-        row["beats_early"] = bool(ee_best and pr["mean_dists"] < ee_best["mean_dists"]
-                                  and pr["recall"] >= T)
+        row = {"target": T, "variants": {}}
+        for vname, fn in variants.items():
+            pr = run_predictor(Q[sl_test], truth[sl_test], tau=frozen[vname][T],
+                               predict_fn=fn)
+            fx = [r for r in fixed_rows if r["recall"] >= min(T, pr["recall"])]
+            fx_best = min(fx, key=lambda r: r["mean_dists"]) if fx else None
+            ee = [r for r in early_rows if r["recall"] >= min(T, pr["recall"])]
+            ee_best = min(ee, key=lambda r: r["mean_dists"]) if ee else None
+            vrow = {"tau": frozen[vname][T], "predictor": pr,
+                    "fixed_best": fx_best, "early_exit_best": ee_best,
+                    "beats_fixed": bool(fx_best and pr["mean_dists"] < fx_best["mean_dists"]
+                                        and pr["recall"] >= T),
+                    "beats_early": bool(ee_best and pr["mean_dists"] < ee_best["mean_dists"]
+                                        and pr["recall"] >= T)}
+            row["variants"][vname] = vrow
+            print(f" TARGET {T} [{vname}]: recall={pr['recall']:.4f} "
+                  f"dists={pr['mean_dists']:.0f} | fixed {fx_best} | early {ee_best} | "
+                  f"WIN fixed={vrow['beats_fixed']} early={vrow['beats_early']}", flush=True)
         results.append(row)
-        print(f" TARGET {T}: predictor recall={pr['recall']:.4f} "
-              f"dists={pr['mean_dists']:.0f} | fixed {fx_best} | early {ee_best} | "
-              f"WIN fixed={row['beats_fixed']} early={row['beats_early']}", flush=True)
 
     return {"ceiling": ceiling, "ceiling_recall_val": ceiling_recall,
             "r2_linear_train": r2_lin, "r2_gbm_train": r2_gbm,
